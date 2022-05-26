@@ -9,9 +9,7 @@ import asyncio
 bot = commands.Bot(command_prefix="'", case_insensitive=True)
 MONGO_PASS = "1R2TEnOzWjgeKirU"
 ANIM_PASS = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE4NzIiLCJuYmYiOjE2NTMzMDA0MDgsImV4cCI6MTY1NTg5MjQwOCwiaWF0IjoxNjUzMzAwNDA4fQ.svdzbWv2s5Ju3HPJ4X0UaDcYjbD1jtNvqz5aDmJSc6I"
-GUILDS = []
-MONGO_URI = "mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority"
-ROOT = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root")
+ROOT = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("users")
 
 
 @bot.event
@@ -61,7 +59,7 @@ async def add(ctx,*,animename):
                 num = int(msg.content) - 1
                 anime = animelist[num]
 
-                if anime in find_one({"id": ctx.author.id})["anime_list"]:
+                if anime in ROOT.find_one({"id": ctx.author.id})["anime_list"]:
                     await secondmsg.edit(content="***Anime already in list***")
                     return
                 else:
@@ -85,7 +83,7 @@ async def add(ctx,*,animename):
                     else:
                         latest = int(temp[0].split("-")[1])
                     
-                    update_one({"id": ctx.author.id}, {"$push": {"anime_list": [anime,latest]}})
+                    ROOT.update_one({"id": ctx.author.id}, {"$push": {"anime_list": [anime,latest]}})
                     await secondmsg.edit(content="***Anime : " + anime + " added to list!***")
 
 @bot.command()
@@ -95,15 +93,11 @@ async def list(ctx,*args):
     user_id = ctx.author.id
     user_name = ctx.author.name
 
-    if arg1 != "" and arg1.isdigit():
-        user_id = int(arg1)
-        user_name = bot.get_user(user_id).name
-
-
-    if find_one({"id": user_id})["anime_list"] == []:
+    
+    if ROOT.find_one({"id": user_id})["anime_list"] == []:
         await ctx.send("***" + user_name + "'s Anime List Is Empty!***\n*'add <anime name> to add an anime*")
     else:
-        anime_list = find_one({"id": user_id})["anime_list"]
+        anime_list = ROOT.find_one({"id": user_id})["anime_list"]
         animestring = ""
         for anime in anime_list:
             animestring += anime[0] + "\n"
@@ -114,10 +108,10 @@ async def list(ctx,*args):
 async def remove(ctx):
     """Removes an anime from your anime list"""
     check_user(ctx.author)
-    if find_one({"id": ctx.author.id})["anime_list"] == []:
+    if ROOT.find_one({"id": ctx.author.id})["anime_list"] == []:
         await ctx.send("***" + ctx.author.name + "'s Anime List Is Empty!***\n*'add <anime name> to add an anime*")
     else:
-        anime_list = find_one({"id": ctx.author.id})["anime_list"]
+        anime_list = ROOT.find_one({"id": ctx.author.id})["anime_list"]
         animestring = ""
         for anime in anime_list:
             animestring += anime[0] + "\n"
@@ -136,31 +130,20 @@ async def remove(ctx):
             num = int(msg.content) - 1
             anime = anime_list[num]
 
-            anime_list = find_one({"id": ctx.author.id})["anime_list"]
+            anime_list = ROOT.find_one({"id": ctx.author.id})["anime_list"]
 
-            update_one({"id": ctx.author.id}, {"$pull": {"anime_list": anime}})
+            ROOT.update_one({"id": ctx.author.id}, {"$pull": {"anime_list": anime}})
             await ctx.send("***Anime : " + anime[0] + " removed from list!***")
 
+
 def check_user(user):
-    with pymongo.MongoClient(MONGO_URI) as client:
-        db = client.get_database("root")
-        users = db.get_collection("users")
-        if users.find_one({"id": user.id}) == None:
-            users.insert_one({"id": user.id, "anime_list": []})
-            print("User " + user.name + " added to database")
+    if ROOT.find_one({"id": user.id}) == None:
+        print("Creating user: " + user.name)
+        ROOT.insert_one({"id": user.id, "anime_list": [],"name" : user.name})
 
-def find_one(data):
-    with pymongo.MongoClient(MONGO_URI) as client:
-        db = client.get_database("root")
-        users = db.get_collection("users")
-        return users.find_one(data)
-
-
-def update_one(data, new_data):
-    with pymongo.MongoClient(MONGO_URI) as client:
-        db = client.get_database("root")
-        users = db.get_collection("users")
-        users.update_one(data, new_data)
+    if ROOT.find_one({"id": user.id})["name"] == None or ROOT.find_one({"id": user.id})["name"] != user.name:
+        print("Updating name: " + user.name)
+        ROOT.update_one({"id": user.id}, {"$set": {"name" : user.name}})
 
 
 bot.run('NjI1MzE5NjU4NjQ3NDUzNzE3.GfsL5h.7KgA2DfdCnrhL1BCZCHkqwn0dJzZUj5l_ZdRCg')
