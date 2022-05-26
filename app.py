@@ -90,10 +90,13 @@ async def add(ctx,*,animename):
 async def list(ctx,*args):
     """Lists all your anime or someone elses by passing their userid as an argument"""
     check_user(ctx.author)
-    user_id = ctx.author.id
     user_name = ctx.author.name
+    user_id = ctx.author.id
 
-    
+    if not args.__len__() == 0:
+        user_name = get_user_name(int(args[0]))
+        user_id = int(args[0])
+
     if ROOT.find_one({"id": user_id})["anime_list"] == []:
         await ctx.send("***" + user_name + "'s Anime List Is Empty!***\n*'add <anime name> to add an anime*")
     else:
@@ -145,5 +148,7 @@ def check_user(user):
         print("Updating name: " + user.name)
         ROOT.update_one({"id": user.id}, {"$set": {"name" : user.name}})
 
+def get_user_name(id):
+    return ROOT.find_one({"id": id})["name"]
 
 bot.run('NjI1MzE5NjU4NjQ3NDUzNzE3.GfsL5h.7KgA2DfdCnrhL1BCZCHkqwn0dJzZUj5l_ZdRCg')
