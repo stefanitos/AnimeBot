@@ -133,8 +133,6 @@ async def remove(ctx):
             num = int(msg.content) - 1
             anime = anime_list[num]
 
-            anime_list = ROOT.find_one({"id": ctx.author.id})["anime_list"]
-
             ROOT.update_one({"id": ctx.author.id}, {"$pull": {"anime_list": anime}})
             await ctx.send("***Anime : " + anime[0] + " removed from list!***")
 
