@@ -3,10 +3,13 @@ from time import sleep
 import aiohttp
 import pymongo
 from bs4 import BeautifulSoup
-import asyncio
+import asyncio,discord
+
+intents = discord.Intents.default()
+intents.members = True
 
 
-bot = commands.Bot(command_prefix="'", case_insensitive=True)
+bot = commands.Bot(command_prefix="'", case_insensitive=True,intents=intents)
 MONGO_PASS = "1R2TEnOzWjgeKirU"
 ANIM_PASS = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE4NzIiLCJuYmYiOjE2NTMzMDA0MDgsImV4cCI6MTY1NTg5MjQwOCwiaWF0IjoxNjUzMzAwNDA4fQ.svdzbWv2s5Ju3HPJ4X0UaDcYjbD1jtNvqz5aDmJSc6I"
 ROOT = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("users")
@@ -16,6 +19,25 @@ ROOT = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m58
 async def on_ready():
     print("Bot is ready")
 
+@bot.event
+async def on_member_join(member):
+    server_id = member.guild.id
+    server = bot.get_guild(server_id)
+    # check if role exists and add it if it doesn't
+    role = discord.utils.get(server.roles, name=str(member.id))
+    if role == None:
+        await server.create_role(name=str(member.id), mentionable=True)
+        role = discord.utils.get(server.roles, name=str(member.id))
+        # create a channel for the new user
+        new_channel = await server.create_text_channel(name=str(member.id))
+        # make the channel only for the new user
+        await new_channel.set_permissions(role, read_messages=True, send_messages=True, read_message_history=True)
+        # make everyone else unable to read the channel
+        await new_channel.set_permissions(server.default_role, read_messages=False)
+        await member.add_roles(role)
+    else:
+        await member.add_roles(role)
+    
 
 @bot.command()
 async def add(ctx,*,animename):
