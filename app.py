@@ -5,6 +5,7 @@ import pymongo
 from bs4 import BeautifulSoup
 import asyncio,discord
 from threading import Thread
+import requests
 
 intents = discord.Intents.default()
 intents.members = True
@@ -13,11 +14,8 @@ intents.members = True
 bot = commands.Bot(command_prefix="'", case_insensitive=True,intents=intents)
 MONGO_PASS = "1R2TEnOzWjgeKirU"
 ROOT = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("users")
+ANIMELIST = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("animelist")
 
-
-@bot.event
-async def on_ready():
-    print("Bot is ready")
 
 @bot.event
 async def on_member_join(member):
@@ -28,11 +26,8 @@ async def on_member_join(member):
     if role == None:
         await server.create_role(name=str(member.id), mentionable=True)
         role = discord.utils.get(server.roles, name=str(member.id))
-        # create a channel for the new user
         new_channel = await server.create_text_channel(name=str(member.id))
-        # make the channel only for the new user
         await new_channel.set_permissions(role, read_messages=True, send_messages=True, read_message_history=True)
-        # make everyone else unable to read the channel
         await new_channel.set_permissions(server.default_role, read_messages=False)
         await member.add_roles(role)
     else:
@@ -106,6 +101,12 @@ async def add(ctx,*,animename):
                         latest = int(temp[0].split("-")[1])
                     
                     ROOT.update_one({"id": ctx.author.id}, {"$push": {"anime_list": [anime,latest]}})
+
+                    # if in animelist there is no anime, add it
+                    if ANIMELIST.find_one({"anime": anime}) == None:
+                        ANIMELIST.insert_one({"anime": anime, "users": [ctx.author.id],"latest": latest})
+                    else:
+                        ANIMELIST.update_one({"anime": anime}, {"$push": {"users": ctx.author.id}})
                     await secondmsg.edit(content="***Anime : " + anime + " added to list!***")
 
 @bot.command()
@@ -156,8 +157,8 @@ async def remove(ctx):
             anime = anime_list[num]
 
             ROOT.update_one({"id": ctx.author.id}, {"$pull": {"anime_list": anime}})
+            ANIMELIST.update_one({"anime": anime[0]}, {"$pull": {"users": ctx.author.id}})
             await ctx.send("***Anime : " + anime[0] + " removed from list!***")
-
 
 def check_user(user):
     if ROOT.find_one({"id": user.id}) == None:
@@ -170,5 +171,24 @@ def check_user(user):
 
 def get_user_name(id):
     return ROOT.find_one({"id": id})["name"]
+
+def get_latest_episode(anime):
+    URL = "https://gogoanime.gg/category/" + anime
+    HEADER = ({'User-Agent':
+            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 \
+            (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36',\
+            'Accept-Language': 'en-US, en;q=0.5'})
+    sleep(5)
+    html = requests.get(URL, headers=HEADER).text
+    ul = BeautifulSoup(html, 'html.parser').find('ul', id='episode_page').find_all("li")
+    temp = []
+    for item in ul:
+        temp.append(item.find("a").text)
+    if temp == ['0']:
+        return 0
+    elif temp.__len__() > 1:
+        return int(temp[-1].split("-")[1])
+    else:
+        return int(temp[0].split("-")[1])
 
 bot.run('NjI1MzE5NjU4NjQ3NDUzNzE3.GfsL5h.7KgA2DfdCnrhL1BCZCHkqwn0dJzZUj5l_ZdRCg')
