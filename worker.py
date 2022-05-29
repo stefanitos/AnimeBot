@@ -3,6 +3,7 @@ from time import sleep
 from bs4 import BeautifulSoup
 from dhooks import Webhook
 import requests
+import schedule
 
 
 MONGO_PASS = "1R2TEnOzWjgeKirU"
@@ -32,17 +33,18 @@ def get_latest_episode(anime):
 
 
 def job():
-    while True:
-        print("Checking for new episodes...")
-        data = ""
-        for anime in ANIMELIST.find():
-            name = anime["anime"]
-            latest_ep = get_latest_episode(name)
-            current_ep = anime["latest"] 
-            if latest_ep > current_ep:
-                data += " " + name
-                ANIMELIST.update_one({"anime": name}, {"$set": {"latest": latest_ep}})
-        if data != "":
-            alert_bot("NEW_EPS" + data)
-        sleep(30*60)
-job()
+    print("Checking for new episodes...")
+    data = ""
+    for anime in ANIMELIST.find():
+        name = anime["anime"]
+        latest_ep = get_latest_episode(name)
+        current_ep = anime["latest"] 
+        if latest_ep > current_ep:
+            data += " " + name
+            ANIMELIST.update_one({"anime": name}, {"$set": {"latest": latest_ep}})
+    if data != "":
+        alert_bot("NEW_EPS" + data)
+schedule.every(30).minutes.do(job)
+
+while True:
+    schedule.run_pending()
