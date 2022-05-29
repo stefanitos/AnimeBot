@@ -38,11 +38,11 @@ def job():
         for anime in ANIMELIST.find():
             name = anime["anime"]
             latest_ep = get_latest_episode(name)
-            current_ep = anime["latest"] - 1 
+            current_ep = anime["latest"] 
             if latest_ep > current_ep:
                 data += " " + name
                 ANIMELIST.update_one({"anime": name}, {"$set": {"latest": latest_ep}})
         if data != "":
             alert_bot("NEW_EPS" + data)
-        sleep(10)
+        sleep(30*60)
 job()
