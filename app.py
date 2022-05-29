@@ -180,7 +180,7 @@ async def remove(ctx):
                 ANIMELIST.delete_one({"anime": anime})
             else:
                 ANIMELIST.update_one({"anime": anime}, {"$pull": {"users": ctx.author.id}})
-            await firstmsg.edit(content="***Anime : " + anime[0] + " removed from list!***")
+            await firstmsg.edit(content="***Anime : " + anime + " removed from list!***")
 
 def check_user(user):
     if ROOT.find_one({"id": user.id}) == None:
