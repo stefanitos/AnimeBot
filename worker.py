@@ -4,7 +4,9 @@ from bs4 import BeautifulSoup
 from dhooks import Webhook
 import requests
 import schedule
+from datetime import datetime
 
+now_time = datetime.now()
 
 MONGO_PASS = "1R2TEnOzWjgeKirU"
 ANIMELIST = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("animelist")
@@ -33,7 +35,8 @@ def get_latest_episode(anime):
 
 
 def job():
-    print("Checking for new episodes...")
+    current_time = now_time.strftime("%H:%M:%S")
+    print("Checking for new episodes...",current_time)
     data = ""
     for anime in ANIMELIST.find():
         name = anime["anime"]

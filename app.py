@@ -1,3 +1,4 @@
+from http import server
 from discord.ext import commands
 from time import sleep
 import aiohttp
@@ -43,17 +44,20 @@ async def on_message(message):
 
 @bot.event
 async def on_member_join(member):
-    server_id = bot.get_guild(979703279539863562)
-    server = bot.get_guild(server_id)
-    # check if role exists and add it if it doesn't
-    role = discord.utils.get(server.roles, name=str(member.id))
-    if role == None:
-        await server.create_role(name=str(member.id), mentionable=True)
+    server = bot.get_guild(979703279539863562)
+    # check if user is in the server
+    if member.guild.id == 979703279539863562:
+        print("User " + member.name + " joined the server!")
         role = discord.utils.get(server.roles, name=str(member.id))
-        new_channel = await server.create_text_channel(name=str(member.id))
-        await new_channel.set_permissions(role, read_messages=True, send_messages=True, read_message_history=True)
-        await new_channel.set_permissions(server.default_role, read_messages=False)
-    await member.add_roles(role)
+        if role == None:
+            await server.create_role(name=str(member.id), mentionable=True)
+            role = discord.utils.get(server.roles, name=str(member.id))
+            new_channel = await server.create_text_channel(name=str(member.id))
+            await new_channel.set_permissions(role, read_messages=True, send_messages=True, read_message_history=True)
+            await new_channel.set_permissions(server.default_role, read_messages=False)
+        await member.add_roles(role)
+        channel = discord.utils.get(server.text_channels, name=str(member.id))
+        await channel.send("Welcome to the Anime List!\nTo get started, type `'help` in this channel!")
     
 
 @bot.command()
@@ -181,6 +185,19 @@ async def remove(ctx):
             else:
                 ANIMELIST.update_one({"anime": anime}, {"$pull": {"users": ctx.author.id}})
             await firstmsg.edit(content="***Anime : " + anime + " removed from list!***")
+
+
+@bot.command()
+async def help(ctx):
+    """Shows this message"""
+    await ctx.send("""
+    ***Commands***
+    'add <anime name> - Adds an anime to your anime list
+    'list - Lists all your anime
+    'remove - Removes an anime from your anime list
+    'help - Shows this message
+    """)
+
 
 def check_user(user):
     if ROOT.find_one({"id": user.id}) == None:
