@@ -51,8 +51,7 @@ async def on_member_join(member):
         print("User " + member.name + " joined the server!")
         role = discord.utils.get(server.roles, name=str(member.id))
         if role == None:
-            await server.create_role(name=str(member.id), mentionable=True)
-            role = discord.utils.get(server.roles, name=str(member.id))
+            role = await server.create_role(name=str(member.id), mentionable=True)
             new_channel = await server.create_text_channel(name=str(member.id))
             await new_channel.set_permissions(role, read_messages=True, send_messages=True, read_message_history=True)
             await new_channel.set_permissions(server.default_role, read_messages=False)

@@ -47,7 +47,8 @@ def job():
             ANIMELIST.update_one({"anime": name}, {"$set": {"latest": latest_ep}})
     if data != "":
         alert_bot("NEW_EPS" + data)
-schedule.every(30).minutes.do(job)
-
-while True:
-    schedule.run_pending()
+#schedule.every(30).minutes.do(job)
+#
+#while True:
+#    schedule.run_pending()
+job()
