@@ -13,6 +13,7 @@ intents.members = True
 
 
 bot = commands.Bot(command_prefix="'", case_insensitive=True,intents=intents)
+bot.remove_command('help')
 MONGO_PASS = "1R2TEnOzWjgeKirU"
 ROOT = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("users")
 ANIMELIST = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("animelist")
