@@ -22,6 +22,12 @@ ANIMELIST = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0
 async def on_ready():
     print("Bot is ready!")
 
+
+@bot.command()
+async def ping(ctx):
+    await ctx.send(f{'{0.ping}ms'.format(bot.latency)})
+
+
 @bot.event
 async def on_message(message):
     guild = bot.get_guild(979703279539863562)
