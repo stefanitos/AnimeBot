@@ -40,15 +40,18 @@ def job():
     data = ""
     for anime in ANIMELIST.find():
         name = anime["anime"]
-        latest_ep = get_latest_episode(name)
-        current_ep = anime["latest"] 
-        if latest_ep > current_ep:
-            data += " " + name
-            ANIMELIST.update_one({"anime": name}, {"$set": {"latest": latest_ep}})
+        try:
+            latest_ep = get_latest_episode(name)
+            current_ep = anime["latest"] 
+            if latest_ep > current_ep:
+                data += " " + name
+                ANIMELIST.update_one({"anime": name}, {"$set": {"latest": latest_ep}})
+        except:
+            print("Error while checking for new episodes")
     if data != "":
         alert_bot("NEW_EPS" + data)
-#schedule.every(30).minutes.do(job)
-#
-#while True:
-#    schedule.run_pending()
-job()
+
+schedule.every(10).minutes.do(job)
+
+while True:
+    schedule.run_pending()
