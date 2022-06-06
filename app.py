@@ -23,13 +23,16 @@ debug = False
 
 @bot.command()
 async def debug(ctx):
-    global debug
-    if debug:
-        debug = False
-        await ctx.send("Debug mode disabled")
+    if ctx.author.id == 355667078553927681:
+        global debug
+        if debug:
+            debug = False
+            await ctx.send("Debug mode disabled")
+        else:
+            debug = True
+            await ctx.send("Debug mode enabled")
     else:
-        debug = True
-        await ctx.send("Debug mode enabled")
+        await ctx.send("You are not allowed to use this command")
 
 
 @bot.event
