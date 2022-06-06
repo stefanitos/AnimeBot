@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 import asyncio,discord
 from datetime import datetime
 import requests
+from dhooks import Webhook
 
 intents = discord.Intents.default()
 intents.members = True
@@ -16,6 +17,8 @@ bot.remove_command('help')
 MONGO_PASS = "1R2TEnOzWjgeKirU"
 ROOT = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("users")
 ANIMELIST = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("animelist")
+LOG_WEBHOOK = "https://discord.com/api/webhooks/983386222900699186/ZtIW12DyKrycFAwRoAsqJGg1R6m0TwqFU4dj96oV1eiKW94chCP8ufej1fqHnnVWklXB"
+
 
 @bot.event
 async def on_ready():
@@ -52,31 +55,9 @@ async def check_for_new_episodes():
                         await channel.send("||<@" + str(id) + ">||\nNew episode of " + anime + "!\n" + "New episode: " + str(latest))
 
 
-
 @bot.command()
 async def ping(ctx):
     await ctx.send("***" + str(bot.latency) + "ms***")
-
-
-#@bot.event
-#async def on_message(message):
-#    guild = bot.get_guild(979703279539863562)
-#    if message.webhook_id:
-#        msg = message.content
-#        if msg.startswith("NEW_EPS"):
-#            msg = msg.split(" ")
-#            msg.pop(0)
-#            for listitem in msg:
-#                ids = ANIMELIST.find_one({"anime": listitem})["users"]
-#                latest = ANIMELIST.find_one({"anime": listitem})["latest"]
-#                for id in ids:
-#                    print("Sending message to " + get_user_name(id) + " about " + listitem)
-#                    for channel in guild.text_channels:
-#                        if channel.name == str(id):
-#                            print("Sending message to " + get_user_name(id) + " about " + listitem)
-#                            await channel.send("||<@" + str(id) + ">||\nNew episode of " + listitem + "!\n" + "New episode: " + str(latest))
-#    else:
-#        await bot.process_commands(message)
 
 
 @bot.event
@@ -165,6 +146,7 @@ async def add(ctx,*animename):
                     ANIMELIST.update_one({"anime": anime}, {"$push": {"users": ctx.author.id}})
                 await secondmsg.edit(content="***Anime : " + anime + " added to list!***")
 
+
 @bot.command()
 async def list(ctx,*args):
     """Lists all your anime or someone elses by passing their userid as an argument"""
@@ -244,8 +226,10 @@ def check_user(user):
         print("Updating name: " + user.name)
         ROOT.update_one({"id": user.id}, {"$set": {"name" : user.name}})
 
+
 def get_user_name(id):
     return ROOT.find_one({"id": id})["name"]
+
 
 def get_latest_episode(anime):
     URL = "https://gogoanime.gg/category/" + anime
@@ -265,5 +249,10 @@ def get_latest_episode(anime):
         return int(temp[-1].split("-")[1])
     else:
         return int(temp[0].split("-")[1])
+
+
+def send_to_log(message):
+    Webhook(url=LOG_WEBHOOK, content=message).post()
+
 
 bot.run('NjI1MzE5NjU4NjQ3NDUzNzE3.GfsL5h.7KgA2DfdCnrhL1BCZCHkqwn0dJzZUj5l_ZdRCg')
