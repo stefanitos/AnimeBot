@@ -37,7 +37,7 @@ async def check_for_new_episodes():
             latest_ep = get_latest_episode(name)
             current_ep = anime["latest"] 
             if latest_ep > current_ep:
-                data.append(anime)
+                data.append(name)
                 ANIMELIST.update_one({"anime": name}, {"$set": {"latest": latest_ep}})
         except:
             print("Error while checking for new episodes")
@@ -46,7 +46,6 @@ async def check_for_new_episodes():
             ids = ANIMELIST.find_one({"anime": anime})["users"]
             latest = ANIMELIST.find_one({"anime": anime})["latest"]
             for id in ids:
-                print("Sending message to " + get_user_name(id) + " about " + anime)
                 for channel in guild.text_channels:
                     if channel.name == str(id):
                         print("Sending message to " + get_user_name(id) + " about " + anime)
