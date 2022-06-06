@@ -18,12 +18,14 @@ MONGO_PASS = "1R2TEnOzWjgeKirU"
 ROOT = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("users")
 ANIMELIST = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("animelist")
 LOG_WEBHOOK = "https://discord.com/api/webhooks/983386222900699186/ZtIW12DyKrycFAwRoAsqJGg1R6m0TwqFU4dj96oV1eiKW94chCP8ufej1fqHnnVWklXB"
+debug = False
 
 
 @bot.event
 async def on_ready():
     print("Bot is ready!")
-    check_for_new_episodes.start()
+    if not debug:
+        check_for_new_episodes.start()
 
 
 @bot.command()
@@ -71,7 +73,7 @@ async def on_member_join(member):
             await new_channel.set_permissions(server.default_role, read_messages=False)
         await member.add_roles(role)
         channel = discord.utils.get(server.text_channels, name=str(member.id))
-        await channel.send("Welcome to the Anime List!\nTo get started, type `'help` in this channel!")
+        await channel.send("Welcome to the Anime Notifier!\nTo get started, type `'help` in this channel!")
     
 
 @bot.command()
@@ -116,32 +118,37 @@ async def add(ctx,*animename):
                 await secondmsg.edit(content="***Anime already in list***")
                 return
             else:
-                URL = "https://gogoanime.gg/category/" + anime
-                HEADER = ({'User-Agent':
-                        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 \
-                        (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36',\
-                        'Accept-Language': 'en-US, en;q=0.5'})
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(URL, headers=HEADER) as response:
-                        data = await response.text()
-                ul = BeautifulSoup(data, 'html.parser').find('ul', id='episode_page').find_all("li")
-                temp = []
-                latest = 0
-                for item in ul:
-                    temp.append(item.find("a").text)
-                if temp == ['0']:
+                try:
+                    soup.find('a', {'title': 'Completed Anime'})
+                    await secondmsg.edit(content="***Anime is not currently airing!***")
                     return
-                elif temp.__len__() > 1:
-                    latest = int(temp[-1].split("-")[1])
-                else:
-                    latest = int(temp[0].split("-")[1])
-                ROOT.update_one({"id": ctx.author.id}, {"$push": {"anime_list": anime}})
-                # if in animelist there is no anime, add it
-                if ANIMELIST.find_one({"anime": anime}) == None:
-                    ANIMELIST.insert_one({"anime": anime, "users": [ctx.author.id],"latest": latest})
-                else:
-                    ANIMELIST.update_one({"anime": anime}, {"$push": {"users": ctx.author.id}})
-                await secondmsg.edit(content="***Anime : " + anime + " added to list!***")
+                except:
+                    URL = "https://gogoanime.gg/category/" + anime
+                    HEADER = ({'User-Agent':
+                            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 \
+                            (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36',\
+                            'Accept-Language': 'en-US, en;q=0.5'})
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get(URL, headers=HEADER) as response:
+                            data = await response.text()
+                    ul = BeautifulSoup(data, 'html.parser').find('ul', id='episode_page').find_all("li")
+                    temp = []
+                    latest = 0
+                    for item in ul:
+                        temp.append(item.find("a").text)
+                    if temp == ['0']:
+                        return
+                    elif temp.__len__() > 1:
+                        latest = int(temp[-1].split("-")[1])
+                    else:
+                        latest = int(temp[0].split("-")[1])
+                    ROOT.update_one({"id": ctx.author.id}, {"$push": {"anime_list": anime}})
+                    # if in animelist there is no anime, add it
+                    if ANIMELIST.find_one({"anime": anime}) == None:
+                        ANIMELIST.insert_one({"anime": anime, "users": [ctx.author.id],"latest": latest})
+                    else:
+                        ANIMELIST.update_one({"anime": anime}, {"$push": {"users": ctx.author.id}})
+                    await secondmsg.edit(content="***Anime : " + anime + " added to list!***")
 
 
 @bot.command()
