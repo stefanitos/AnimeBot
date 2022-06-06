@@ -1,11 +1,10 @@
-from http import server
-from discord.ext import commands
+from discord.ext import commands, tasks
 from time import sleep
 import aiohttp
 import pymongo
 from bs4 import BeautifulSoup
 import asyncio,discord
-from threading import Thread
+from datetime import datetime
 import requests
 
 intents = discord.Intents.default()
@@ -21,6 +20,38 @@ ANIMELIST = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0
 @bot.event
 async def on_ready():
     print("Bot is ready!")
+    print("Starrting job...")
+    check_for_new_episodes.start()
+
+
+@tasks.loop(seconds=10)
+async def check_for_new_episodes():
+    guild = bot.get_guild(979703279539863562)
+    now_time = datetime.now()
+    current_time = now_time.strftime("%H:%M:%S")
+    print("Checking for new episodes...",current_time)
+    data = []
+    for anime in ANIMELIST.find():
+        name = anime["anime"]
+        try:
+            latest_ep = get_latest_episode(name)
+            current_ep = anime["latest"] 
+            if latest_ep > current_ep:
+                data.append(anime)
+                ANIMELIST.update_one({"anime": name}, {"$set": {"latest": latest_ep}})
+        except:
+            print("Error while checking for new episodes")
+    if data != []:
+        for anime in data:
+            ids = ANIMELIST.find_one({"anime": anime})["users"]
+            latest = ANIMELIST.find_one({"anime": anime})["latest"]
+            for id in ids:
+                print("Sending message to " + get_user_name(id) + " about " + anime)
+                for channel in guild.text_channels:
+                    if channel.name == str(id):
+                        print("Sending message to " + get_user_name(id) + " about " + anime)
+                        await channel.send("||<@" + str(id) + ">||\nNew episode of " + anime + "!\n" + "New episode: " + str(latest))
+
 
 
 @bot.command()
@@ -217,5 +248,23 @@ def check_user(user):
 def get_user_name(id):
     return ROOT.find_one({"id": id})["name"]
 
+def get_latest_episode(anime):
+    URL = "https://gogoanime.gg/category/" + anime
+    HEADER = ({'User-Agent':
+            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 \
+            (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36',\
+            'Accept-Language': 'en-US, en;q=0.5'})
+    sleep(5)
+    html = requests.get(URL, headers=HEADER).text
+    ul = BeautifulSoup(html, 'html.parser').find('ul', id='episode_page').find_all("li")
+    temp = []
+    for item in ul:
+        temp.append(item.find("a").text)
+    if temp == ['0']:
+        return 0
+    elif temp.__len__() > 1:
+        return int(temp[-1].split("-")[1])
+    else:
+        return int(temp[0].split("-")[1])
 
 bot.run('NjI1MzE5NjU4NjQ3NDUzNzE3.GfsL5h.7KgA2DfdCnrhL1BCZCHkqwn0dJzZUj5l_ZdRCg')
