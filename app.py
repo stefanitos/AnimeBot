@@ -20,7 +20,7 @@ ANIMELIST = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0
 @bot.event
 async def on_ready():
     print("Bot is ready!")
-    print("Starrting job...")
+    print("Starting job...")
     check_for_new_episodes.start()
 
 
@@ -59,25 +59,25 @@ async def ping(ctx):
     await ctx.send("***" + str(bot.latency) + "ms***")
 
 
-@bot.event
-async def on_message(message):
-    guild = bot.get_guild(979703279539863562)
-    if message.webhook_id:
-        msg = message.content
-        if msg.startswith("NEW_EPS"):
-            msg = msg.split(" ")
-            msg.pop(0)
-            for listitem in msg:
-                ids = ANIMELIST.find_one({"anime": listitem})["users"]
-                latest = ANIMELIST.find_one({"anime": listitem})["latest"]
-                for id in ids:
-                    print("Sending message to " + get_user_name(id) + " about " + listitem)
-                    for channel in guild.text_channels:
-                        if channel.name == str(id):
-                            print("Sending message to " + get_user_name(id) + " about " + listitem)
-                            await channel.send("||<@" + str(id) + ">||\nNew episode of " + listitem + "!\n" + "New episode: " + str(latest))
-    else:
-        await bot.process_commands(message)
+#@bot.event
+#async def on_message(message):
+#    guild = bot.get_guild(979703279539863562)
+#    if message.webhook_id:
+#        msg = message.content
+#        if msg.startswith("NEW_EPS"):
+#            msg = msg.split(" ")
+#            msg.pop(0)
+#            for listitem in msg:
+#                ids = ANIMELIST.find_one({"anime": listitem})["users"]
+#                latest = ANIMELIST.find_one({"anime": listitem})["latest"]
+#                for id in ids:
+#                    print("Sending message to " + get_user_name(id) + " about " + listitem)
+#                    for channel in guild.text_channels:
+#                        if channel.name == str(id):
+#                            print("Sending message to " + get_user_name(id) + " about " + listitem)
+#                            await channel.send("||<@" + str(id) + ">||\nNew episode of " + listitem + "!\n" + "New episode: " + str(latest))
+#    else:
+#        await bot.process_commands(message)
 
 
 @bot.event
