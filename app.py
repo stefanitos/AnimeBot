@@ -4,7 +4,6 @@ import aiohttp
 import pymongo
 from bs4 import BeautifulSoup
 import asyncio,discord
-from datetime import datetime
 import requests
 from dhooks import Webhook
 
@@ -27,12 +26,10 @@ async def on_ready():
     check_for_new_episodes.start()
 
 
-@tasks.loop(seconds=10)
+@tasks.loop(seconds=600)
 async def check_for_new_episodes():
     guild = bot.get_guild(979703279539863562)
-    now_time = datetime.now()
-    current_time = now_time.strftime("%H:%M:%S")
-    print("Checking for new episodes...",current_time)
+    send_to_log("Checking for new episodes...")
     data = []
     for anime in ANIMELIST.find():
         name = anime["anime"]
@@ -197,7 +194,6 @@ async def remove(ctx):
             anime = anime_list[num]
 
             ROOT.update_one({"id": ctx.author.id}, {"$pull": {"anime_list": anime}})
-            # if there is no other users in the list, remove the anime
             if ANIMELIST.find_one({"anime": anime})["users"].__len__() == 1:
                 ANIMELIST.delete_one({"anime": anime})
             else:
