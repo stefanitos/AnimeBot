@@ -248,7 +248,7 @@ def get_latest_episode(anime):
 
 
 def send_to_log(message):
-    Webhook(url=LOG_WEBHOOK, content=message).post()
+    Webhook(LOG_WEBHOOK).send(message)
 
 
 bot.run('NjI1MzE5NjU4NjQ3NDUzNzE3.GfsL5h.7KgA2DfdCnrhL1BCZCHkqwn0dJzZUj5l_ZdRCg')
