@@ -7,6 +7,7 @@ import asyncio,discord
 import requests
 from dhooks import Webhook
 
+
 intents = discord.Intents.default()
 intents.members = True
 
@@ -22,8 +23,12 @@ LOG_WEBHOOK = "https://discord.com/api/webhooks/983386222900699186/ZtIW12DyKrycF
 @bot.event
 async def on_ready():
     print("Bot is ready!")
-    print("Starting job...")
     check_for_new_episodes.start()
+
+
+@bot.command()
+async def ping(ctx):
+    await ctx.send("***" + str(bot.latency) + "ms***")
 
 
 @tasks.loop(seconds=600)
@@ -50,11 +55,6 @@ async def check_for_new_episodes():
                     if channel.name == str(id):
                         print("Sending message to " + get_user_name(id) + " about " + anime)
                         await channel.send("||<@" + str(id) + ">||\nNew episode of " + anime + "!\n" + "New episode: " + str(latest))
-
-
-@bot.command()
-async def ping(ctx):
-    await ctx.send("***" + str(bot.latency) + "ms***")
 
 
 @bot.event
