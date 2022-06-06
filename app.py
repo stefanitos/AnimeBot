@@ -21,6 +21,17 @@ LOG_WEBHOOK = "https://discord.com/api/webhooks/983386222900699186/ZtIW12DyKrycF
 debug = False
 
 
+@bot.command()
+async def debug(ctx):
+    global debug
+    if debug:
+        debug = False
+        await ctx.send("Debug mode disabled")
+    else:
+        debug = True
+        await ctx.send("Debug mode enabled")
+
+
 @bot.event
 async def on_ready():
     print("Bot is ready!")
