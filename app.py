@@ -266,6 +266,5 @@ def humansize(nbytes):
 def send_to_log(message):
     Webhook(LOG_WEBHOOK).send(message)
 
-# get env variables
 
 bot.run(BOT_TOKEN)
