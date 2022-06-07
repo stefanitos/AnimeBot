@@ -5,9 +5,12 @@ from dhooks import Webhook
 from dotenv import dotenv_values
 import asyncio,discord,os,speedtest,requests,pymongo,aiohttp
 
-envs = dotenv_values(".env")
+
 intents = discord.Intents.default()
 intents.members = False
+
+envs = dotenv_values(".env")
+
 BOT_TOKEN = envs["BOT_TOKEN"]
 MONGO_PASS = envs["MONGO_PASS"]
 bot = commands.Bot(command_prefix="'", case_insensitive=True, intents=intents)
