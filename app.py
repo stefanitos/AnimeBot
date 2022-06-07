@@ -227,7 +227,7 @@ async def remove(ctx):
 
 
 @bot.command()
-async def info(ctx):
+async def system(ctx):
     """system info"""
     if not debug:
         await ctx.send(
