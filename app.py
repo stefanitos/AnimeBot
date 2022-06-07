@@ -1,20 +1,16 @@
 from discord.ext import commands, tasks
 from time import sleep
-import aiohttp
-import pymongo
 from bs4 import BeautifulSoup
-import asyncio,discord
-import requests
 from dhooks import Webhook
-import speedtest
+import asyncio,discord,os,speedtest,requests,pymongo,aiohttp
 
 
 intents = discord.Intents.default()
 intents.members = False
 
-
+BOT_TOKEN = os.environ.get("BOT_TOKEN")
+MONGO_PASS = os.environ.get("MONGO_PASS")
 bot = commands.Bot(command_prefix="'", case_insensitive=True, intents=intents)
-MONGO_PASS = "1R2TEnOzWjgeKirU"
 ROOT = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("users")
 ANIMELIST = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("animelist")
 LOG_WEBHOOK = "https://discord.com/api/webhooks/983386222900699186/ZtIW12DyKrycFAwRoAsqJGg1R6m0TwqFU4dj96oV1eiKW94chCP8ufej1fqHnnVWklXB"
@@ -52,7 +48,7 @@ async def check_for_new_episodes():
     data = []
     for anime in ANIMELIST.find():
         name = anime["anime"]
-        try:
+        try:    
             latest_ep = get_latest_episode(name)
             current_ep = anime["latest"] 
             if latest_ep > current_ep:
@@ -165,25 +161,23 @@ async def add(ctx,*animename):
 async def list(ctx,*args):
     """Lists all your anime or someone elses ('list <user id>)"""
     check_user(ctx.author)
-    user_name = ctx.author.name
-    user_id = ctx.author.id
 
     if not args.__len__() == 0:
         user_name = get_user_name(int(args[0]))
         user_id = int(args[0])
-
-    if ROOT.find_one({"id": user_id})["anime_list"] == []:
-        if user_id == ctx.author.id:
-            await ctx.send("***Your List Is Empty!***\n*'add <anime name> to add an anime*")
-        else:
-            await ctx.send("***" + user_name + "'s Anime List Is Empty!***\n*'add <anime name> to add an anime*")
-            
     else:
-        anime_list = ROOT.find_one({"id": user_id})["anime_list"]
-        animestring = ""
-        for anime in anime_list:
-            animestring += anime + "\n"
-        await ctx.send("***" + user_name + "'s Anime List:***\n" + animestring)
+        user_name = ctx.author.name
+        user_id = ctx.author.id
+
+    anime_list = ROOT.find_one({"id": user_id})["anime_list"]
+
+    if anime_list == []:
+        await ctx.send("***No anime in list***")
+
+    animestring = ""
+    for anime in anime_list:
+        animestring += anime + "\n"
+    await ctx.send("***" + user_name + "'s Anime List:***\n" + animestring)
 
 
 @bot.command()
@@ -269,5 +263,6 @@ def humansize(nbytes):
 def send_to_log(message):
     Webhook(LOG_WEBHOOK).send(message)
 
+# get env variables
 
-bot.run('NjI1MzE5NjU4NjQ3NDUzNzE3.GfsL5h.7KgA2DfdCnrhL1BCZCHkqwn0dJzZUj5l_ZdRCg')
+bot.run(BOT_TOKEN)
