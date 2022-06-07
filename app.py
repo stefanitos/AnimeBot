@@ -6,6 +6,7 @@ from bs4 import BeautifulSoup
 import asyncio,discord
 import requests
 from dhooks import Webhook
+import psutil
 
 
 intents = discord.Intents.default()
@@ -223,6 +224,17 @@ async def remove(ctx):
             else:
                 ANIMELIST.update_one({"anime": anime}, {"$pull": {"users": ctx.author.id}})
             await firstmsg.edit(content="***Anime : " + anime + " removed from list!***")
+
+
+@bot.command()
+async def info(ctx):
+    """system info"""
+    await ctx.send(
+    "CPU Usage: " + str(psutil.cpu_percent()) + "%\n" +
+    "CPU Temp: " + str(psutil.sensors_temperatures()['cpu_thermal'][0][1]) + "°C\n" +
+    "RAM Usage: " + str(psutil.virtual_memory().percent) + "%\n" +
+    "Disk Usage: " + str(psutil.disk_usage('/').percent) + "%"
+    )
 
 
 def check_user(user):
