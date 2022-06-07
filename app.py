@@ -10,7 +10,7 @@ import speedtest
 
 
 intents = discord.Intents.default()
-intents.members = True
+intents.members = False
 
 
 bot = commands.Bot(command_prefix="'", case_insensitive=True, intents=intents)
