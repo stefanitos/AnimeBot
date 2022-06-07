@@ -2,14 +2,14 @@ from discord.ext import commands, tasks
 from time import sleep
 from bs4 import BeautifulSoup
 from dhooks import Webhook
+from dotenv import dotenv_values
 import asyncio,discord,os,speedtest,requests,pymongo,aiohttp
 
-
+envs = dotenv_values(".env")
 intents = discord.Intents.default()
 intents.members = False
-
-BOT_TOKEN = os.environ.get("BOT_TOKEN")
-MONGO_PASS = os.environ.get("MONGO_PASS")
+BOT_TOKEN = envs["BOT_TOKEN"]
+MONGO_PASS = envs["MONGO_PASS"]
 bot = commands.Bot(command_prefix="'", case_insensitive=True, intents=intents)
 ROOT = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("users")
 ANIMELIST = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("animelist")
