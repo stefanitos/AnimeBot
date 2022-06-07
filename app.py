@@ -231,10 +231,10 @@ async def info(ctx):
     """system info"""
     if not debug:
         await ctx.send(
-        "CPU Usage: " + str(psutil.cpu_percent()) + "%\n" +
-        "CPU Temp: " + str(psutil.sensors_temperatures()['cpu_thermal'][0][1]) + "°C\n" +
-        "RAM Usage: " + str(psutil.virtual_memory().percent) + "%\n" +
-        "Disk Usage: " + str(psutil.disk_usage('/').percent) + "%"
+        "CPU Usage: ***" + str(psutil.cpu_percent()) + "***%\n" +
+        "CPU Temp: ***" + str(psutil.sensors_temperatures()['cpu_thermal'][0][1]) + "***°C\n" +
+        "RAM Usage: ***" + str(psutil.virtual_memory().percent) + "***%\n" +
+        "Disk Usage: ***" + str(psutil.disk_usage('/').percent) + "***%"
         )
 
 
