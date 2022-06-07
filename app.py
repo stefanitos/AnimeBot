@@ -18,8 +18,7 @@ MONGO_PASS = "1R2TEnOzWjgeKirU"
 ROOT = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("users")
 ANIMELIST = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("animelist")
 LOG_WEBHOOK = "https://discord.com/api/webhooks/983386222900699186/ZtIW12DyKrycFAwRoAsqJGg1R6m0TwqFU4dj96oV1eiKW94chCP8ufej1fqHnnVWklXB"
-global debug
-debug = True
+debug = False
 
 
 @bot.command()
@@ -32,20 +31,6 @@ async def speed(ctx):
     st.upload()
     st.results.share()
     await msg.edit(content="Download: " + humansize(st.results.download) + "\nUpload: " + humansize(st.results.upload) + "\nPing: " + str(st.results.ping) + "ms")
-
-
-@bot.command()
-async def debug(ctx):
-    if ctx.author.id == 355667078553927681:
-        global debug
-        if debug:
-            debug = False
-            await ctx.send("Debug mode disabled")
-        else:
-            debug = True
-            await ctx.send("Debug mode enabled")
-    else:
-        await ctx.send("You are not allowed to use this command")
 
 
 @bot.event
@@ -62,29 +47,28 @@ async def ping(ctx):
 
 @tasks.loop(seconds=600)
 async def check_for_new_episodes():
-    if not debug:
-        guild = bot.get_guild(979703279539863562)
-        send_to_log("Checking for new episodes...")
-        data = []
-        for anime in ANIMELIST.find():
-            name = anime["anime"]
-            try:
-                latest_ep = get_latest_episode(name)
-                current_ep = anime["latest"] 
-                if latest_ep > current_ep:
-                    data.append(name)
-                    ANIMELIST.update_one({"anime": name}, {"$set": {"latest": latest_ep}})
-            except:
-                raise Exception("Error getting latest episode")
-        if data != []:
-            for anime in data:
-                ids = ANIMELIST.find_one({"anime": anime})["users"]
-                latest = ANIMELIST.find_one({"anime": anime})["latest"]
-                for id in ids:
-                    for channel in guild.text_channels:
-                        if channel.name == str(id):
-                            print("Sending message to " + get_user_name(id) + " about " + anime)
-                            await channel.send("||<@" + str(id) + ">||\nNew episode of " + anime + "!\n" + "New episode: " + str(latest))
+    guild = bot.get_guild(979703279539863562)
+    send_to_log("Checking for new episodes...")
+    data = []
+    for anime in ANIMELIST.find():
+        name = anime["anime"]
+        try:
+            latest_ep = get_latest_episode(name)
+            current_ep = anime["latest"] 
+            if latest_ep > current_ep:
+                data.append(name)
+                ANIMELIST.update_one({"anime": name}, {"$set": {"latest": latest_ep}})
+        except:
+            raise Exception("Error getting latest episode")
+    if data != []:
+        for anime in data:
+            ids = ANIMELIST.find_one({"anime": anime})["users"]
+            latest = ANIMELIST.find_one({"anime": anime})["latest"]
+            for id in ids:
+                for channel in guild.text_channels:
+                    if channel.name == str(id):
+                        print("Sending message to " + get_user_name(id) + " about " + anime)
+                        await channel.send("||<@" + str(id) + ">||\nNew episode of " + anime + "!\n" + "New episode: " + str(latest))
 
 
 @bot.event
