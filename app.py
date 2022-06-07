@@ -12,12 +12,12 @@ intents = discord.Intents.default()
 intents.members = True
 
 
-bot = commands.Bot(command_prefix="'", case_insensitive=True,intents=intents)
-bot.remove_command('help')
+bot = commands.Bot(command_prefix="'", case_insensitive=True, intents=intents)
 MONGO_PASS = "1R2TEnOzWjgeKirU"
 ROOT = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("users")
 ANIMELIST = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("animelist")
 LOG_WEBHOOK = "https://discord.com/api/webhooks/983386222900699186/ZtIW12DyKrycFAwRoAsqJGg1R6m0TwqFU4dj96oV1eiKW94chCP8ufej1fqHnnVWklXB"
+global debug
 debug = False
 
 
@@ -44,39 +44,39 @@ async def on_ready():
 
 @bot.command()
 async def ping(ctx):
-    await ctx.send("***" + str(bot.latency) + "ms***")
+    await ctx.send("***" + str(bot.latency) + " seconds***")
 
 
 @tasks.loop(seconds=600)
 async def check_for_new_episodes():
-    guild = bot.get_guild(979703279539863562)
-    send_to_log("Checking for new episodes...")
-    data = []
-    for anime in ANIMELIST.find():
-        name = anime["anime"]
-        try:
-            latest_ep = get_latest_episode(name)
-            current_ep = anime["latest"] 
-            if latest_ep > current_ep:
-                data.append(name)
-                ANIMELIST.update_one({"anime": name}, {"$set": {"latest": latest_ep}})
-        except:
-            print("Error while checking for new episodes")
-    if data != []:
-        for anime in data:
-            ids = ANIMELIST.find_one({"anime": anime})["users"]
-            latest = ANIMELIST.find_one({"anime": anime})["latest"]
-            for id in ids:
-                for channel in guild.text_channels:
-                    if channel.name == str(id):
-                        print("Sending message to " + get_user_name(id) + " about " + anime)
-                        await channel.send("||<@" + str(id) + ">||\nNew episode of " + anime + "!\n" + "New episode: " + str(latest))
+    if not debug:
+        guild = bot.get_guild(979703279539863562)
+        send_to_log("Checking for new episodes...")
+        data = []
+        for anime in ANIMELIST.find():
+            name = anime["anime"]
+            try:
+                latest_ep = get_latest_episode(name)
+                current_ep = anime["latest"] 
+                if latest_ep > current_ep:
+                    data.append(name)
+                    ANIMELIST.update_one({"anime": name}, {"$set": {"latest": latest_ep}})
+            except:
+                raise Exception("Error getting latest episode")
+        if data != []:
+            for anime in data:
+                ids = ANIMELIST.find_one({"anime": anime})["users"]
+                latest = ANIMELIST.find_one({"anime": anime})["latest"]
+                for id in ids:
+                    for channel in guild.text_channels:
+                        if channel.name == str(id):
+                            print("Sending message to " + get_user_name(id) + " about " + anime)
+                            await channel.send("||<@" + str(id) + ">||\nNew episode of " + anime + "!\n" + "New episode: " + str(latest))
 
 
 @bot.event
 async def on_member_join(member):
     server = bot.get_guild(979703279539863562)
-    # check if user is in the server
     if member.guild.id == 979703279539863562:
         print("User " + member.name + " joined the server!")
         role = discord.utils.get(server.roles, name=str(member.id))
@@ -92,7 +92,7 @@ async def on_member_join(member):
 
 @bot.command()
 async def add(ctx,*animename):
-    """Adds an anime to your anime list"""
+    """'add <anime name> - Adds an anime to your list"""
     check_user(ctx.author)
     if animename.__len__() == 0:
         await ctx.send("Please specify an anime name")
@@ -157,7 +157,6 @@ async def add(ctx,*animename):
                     else:
                         latest = int(temp[0].split("-")[1])
                     ROOT.update_one({"id": ctx.author.id}, {"$push": {"anime_list": anime}})
-                    # if in animelist there is no anime, add it
                     if ANIMELIST.find_one({"anime": anime}) == None:
                         ANIMELIST.insert_one({"anime": anime, "users": [ctx.author.id],"latest": latest})
                     else:
@@ -167,7 +166,7 @@ async def add(ctx,*animename):
 
 @bot.command()
 async def list(ctx,*args):
-    """Lists all your anime or someone elses by passing their userid as an argument"""
+    """Lists all your anime or someone elses ('list <user id>)"""
     check_user(ctx.author)
     user_name = ctx.author.name
     user_id = ctx.author.id
@@ -177,7 +176,11 @@ async def list(ctx,*args):
         user_id = int(args[0])
 
     if ROOT.find_one({"id": user_id})["anime_list"] == []:
-        await ctx.send("***" + user_name + "'s Anime List Is Empty!***\n*'add <anime name> to add an anime*")
+        if user_id == ctx.author.id:
+            await ctx.send("***Your List Is Empty!***\n*'add <anime name> to add an anime*")
+        else:
+            await ctx.send("***" + user_name + "'s Anime List Is Empty!***\n*'add <anime name> to add an anime*")
+            
     else:
         anime_list = ROOT.find_one({"id": user_id})["anime_list"]
         animestring = ""
@@ -188,7 +191,7 @@ async def list(ctx,*args):
 
 @bot.command()
 async def remove(ctx):
-    """Removes an anime from your anime list"""
+    """'remove - Removes an anime from your list"""
     check_user(ctx.author)
     if ROOT.find_one({"id": ctx.author.id})["anime_list"] == []:
         await ctx.send("***" + ctx.author.name + "'s Anime List Is Empty!***\n*'add <anime name> to add an anime*")
@@ -220,18 +223,6 @@ async def remove(ctx):
             else:
                 ANIMELIST.update_one({"anime": anime}, {"$pull": {"users": ctx.author.id}})
             await firstmsg.edit(content="***Anime : " + anime + " removed from list!***")
-
-
-@bot.command()
-async def help(ctx):
-    """Shows this message"""
-    await ctx.send("""
-    ***Commands***
-    'add <anime name> - Adds an anime to your anime list
-    'list - Lists all your anime
-    'remove - Removes an anime from your anime list
-    'help - Shows this message
-    """)
 
 
 def check_user(user):
