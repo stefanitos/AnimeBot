@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 import asyncio,discord
 import requests
 from dhooks import Webhook
-import psutil
+import speedtest
 
 
 intents = discord.Intents.default()
@@ -19,7 +19,19 @@ ROOT = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m58
 ANIMELIST = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("animelist")
 LOG_WEBHOOK = "https://discord.com/api/webhooks/983386222900699186/ZtIW12DyKrycFAwRoAsqJGg1R6m0TwqFU4dj96oV1eiKW94chCP8ufej1fqHnnVWklXB"
 global debug
-debug = False
+debug = True
+
+
+@bot.command()
+async def speed(ctx):
+    """Speed test"""
+    msg = await ctx.send("Running speed test...")
+    st = speedtest.Speedtest()
+    st.get_best_server()
+    st.download()
+    st.upload()
+    st.results.share()
+    await msg.edit(content="Download: " + humansize(st.results.download) + "\nUpload: " + humansize(st.results.upload) + "\nPing: " + str(st.results.ping) + "ms")
 
 
 @bot.command()
@@ -258,6 +270,16 @@ def get_latest_episode(anime):
         return int(temp[-1].split("-")[1])
     else:
         return int(temp[0].split("-")[1])
+
+
+def humansize(nbytes):
+    suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
+    i = 0
+    while nbytes >= 1024 and i < len(suffixes)-1:
+        nbytes /= 1024.
+        i += 1
+    f = ('%.2f' % nbytes).rstrip('0').rstrip('.')
+    return '%s %s' % (f, suffixes[i])
 
 
 def send_to_log(message):
