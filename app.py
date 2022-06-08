@@ -3,7 +3,13 @@ from time import sleep
 from bs4 import BeautifulSoup
 from dhooks import Webhook
 from dotenv import dotenv_values
-import asyncio,discord,os,speedtest,requests,pymongo,aiohttp
+import asyncio
+import discord
+import os
+import speedtest
+import requests
+import pymongo
+import aiohttp
 
 
 intents = discord.Intents.default()
@@ -15,8 +21,10 @@ BOT_TOKEN = envs["BOT_TOKEN"]
 MONGO_PASS = envs["MONGO_PASS"]
 LOG_WEBHOOK = envs["LOG_HOOK"]
 bot = commands.Bot(command_prefix="'", case_insensitive=True, intents=intents)
-ROOT = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("users")
-ANIMELIST = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("animelist")
+ROOT = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS +
+                           "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("users")
+ANIMELIST = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS +
+                                "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("animelist")
 debug = False
 
 
@@ -51,12 +59,13 @@ async def check_for_new_episodes():
     data = []
     for anime in ANIMELIST.find():
         name = anime["anime"]
-        try:    
+        try:
             latest_ep = get_latest_episode(name)
-            current_ep = anime["latest"] 
+            current_ep = anime["latest"]
             if latest_ep > current_ep:
                 data.append(name)
-                ANIMELIST.update_one({"anime": name}, {"$set": {"latest": latest_ep}})
+                ANIMELIST.update_one(
+                    {"anime": name}, {"$set": {"latest": latest_ep}})
         except:
             raise Exception("Error getting latest episode")
     if data != []:
@@ -66,7 +75,8 @@ async def check_for_new_episodes():
             for id in ids:
                 for channel in guild.text_channels:
                     if channel.name == str(id):
-                        print("Sending message to " + get_user_name(id) + " about " + anime)
+                        print("Sending message to " +
+                              get_user_name(id) + " about " + anime)
                         await channel.send("||<@" + str(id) + ">||\nNew episode of " + anime + "!\n" + "New episode: " + str(latest))
 
 
@@ -84,10 +94,10 @@ async def on_member_join(member):
         await member.add_roles(role)
         channel = discord.utils.get(server.text_channels, name=str(member.id))
         await channel.send("Welcome to the Anime Notifier!\nTo get started, type `'help` in this channel!")
-    
+
 
 @bot.command()
-async def add(ctx,*animename):
+async def add(ctx, *animename):
     """'add <anime name> - Adds an anime to your list"""
     check_user(ctx.author)
     if animename.__len__() == 0:
@@ -100,7 +110,7 @@ async def add(ctx,*animename):
         async with session.get(url + anime_name) as response:
             data = await response.text()
     soup = BeautifulSoup(data, 'html.parser')
-    results = soup.find_all("p",{"class": "name"})
+    results = soup.find_all("p", {"class": "name"})
     animelist = []
     animestring = ""
     counter = 1
@@ -114,6 +124,7 @@ async def add(ctx,*animename):
     else:
         await firstmsg.edit(content="***Found the following anime:***\n" + animestring)
         secondmsg = await ctx.send("\nPlease enter the number of the anime you would like to add")
+
         def check(m):
             return m.author == ctx.author and m.channel == ctx.channel and m.content.isdigit()
         try:
@@ -135,13 +146,14 @@ async def add(ctx,*animename):
                 except:
                     URL = "https://gogoanime.gg/category/" + anime
                     HEADER = ({'User-Agent':
-                            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 \
-                            (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36',\
-                            'Accept-Language': 'en-US, en;q=0.5'})
+                               'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 \
+                            (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36',
+                               'Accept-Language': 'en-US, en;q=0.5'})
                     async with aiohttp.ClientSession() as session:
                         async with session.get(URL, headers=HEADER) as response:
                             data = await response.text()
-                    ul = BeautifulSoup(data, 'html.parser').find('ul', id='episode_page').find_all("li")
+                    ul = BeautifulSoup(data, 'html.parser').find(
+                        'ul', id='episode_page').find_all("li")
                     temp = []
                     latest = 0
                     for item in ul:
@@ -152,16 +164,19 @@ async def add(ctx,*animename):
                         latest = int(temp[-1].split("-")[1])
                     else:
                         latest = int(temp[0].split("-")[1])
-                    ROOT.update_one({"id": ctx.author.id}, {"$push": {"anime_list": anime}})
+                    ROOT.update_one({"id": ctx.author.id}, {
+                                    "$push": {"anime_list": anime}})
                     if ANIMELIST.find_one({"anime": anime}) == None:
-                        ANIMELIST.insert_one({"anime": anime, "users": [ctx.author.id],"latest": latest})
+                        ANIMELIST.insert_one(
+                            {"anime": anime, "users": [ctx.author.id], "latest": latest})
                     else:
-                        ANIMELIST.update_one({"anime": anime}, {"$push": {"users": ctx.author.id}})
+                        ANIMELIST.update_one({"anime": anime}, {
+                                             "$push": {"users": ctx.author.id}})
                     await secondmsg.edit(content="***Anime : " + anime + " added to list!***")
 
 
 @bot.command()
-async def list(ctx,*args):
+async def list(ctx, *args):
     """Lists all your anime or someone elses ('list <user id>)"""
     check_user(ctx.author)
 
@@ -211,22 +226,24 @@ async def remove(ctx):
             num = int(msg.content) - 1
             anime = anime_list[num]
 
-            ROOT.update_one({"id": ctx.author.id}, {"$pull": {"anime_list": anime}})
+            ROOT.update_one({"id": ctx.author.id}, {
+                            "$pull": {"anime_list": anime}})
             if ANIMELIST.find_one({"anime": anime})["users"].__len__() == 1:
                 ANIMELIST.delete_one({"anime": anime})
             else:
-                ANIMELIST.update_one({"anime": anime}, {"$pull": {"users": ctx.author.id}})
+                ANIMELIST.update_one({"anime": anime}, {
+                                     "$pull": {"users": ctx.author.id}})
             await firstmsg.edit(content="***Anime : " + anime + " removed from list!***")
 
 
 def check_user(user):
     if ROOT.find_one({"id": user.id}) == None:
         print("Creating user: " + user.name)
-        ROOT.insert_one({"id": user.id, "anime_list": [],"name" : user.name})
+        ROOT.insert_one({"id": user.id, "anime_list": [], "name": user.name})
 
     if ROOT.find_one({"id": user.id})["name"] == None or ROOT.find_one({"id": user.id})["name"] != user.name:
         print("Updating name: " + user.name)
-        ROOT.update_one({"id": user.id}, {"$set": {"name" : user.name}})
+        ROOT.update_one({"id": user.id}, {"$set": {"name": user.name}})
 
 
 def get_user_name(id):
@@ -236,12 +253,13 @@ def get_user_name(id):
 def get_latest_episode(anime):
     URL = "https://gogoanime.gg/category/" + anime
     HEADER = ({'User-Agent':
-            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 \
-            (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36',\
-            'Accept-Language': 'en-US, en;q=0.5'})
+               'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 \
+            (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36',
+               'Accept-Language': 'en-US, en;q=0.5'})
     sleep(5)
     html = requests.get(URL, headers=HEADER).text
-    ul = BeautifulSoup(html, 'html.parser').find('ul', id='episode_page').find_all("li")
+    ul = BeautifulSoup(html, 'html.parser').find(
+        'ul', id='episode_page').find_all("li")
     temp = []
     for item in ul:
         temp.append(item.find("a").text)
