@@ -13,10 +13,10 @@ envs = dotenv_values(".env")
 
 BOT_TOKEN = envs["BOT_TOKEN"]
 MONGO_PASS = envs["MONGO_PASS"]
+LOG_HOOK = envs["LOG_HOOK"]
 bot = commands.Bot(command_prefix="'", case_insensitive=True, intents=intents)
 ROOT = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("users")
 ANIMELIST = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS + "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("animelist")
-LOG_WEBHOOK = "https://discord.com/api/webhooks/983386222900699186/ZtIW12DyKrycFAwRoAsqJGg1R6m0TwqFU4dj96oV1eiKW94chCP8ufej1fqHnnVWklXB"
 debug = False
 
 
