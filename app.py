@@ -6,7 +6,6 @@ from dhooks import Webhook
 from dotenv import dotenv_values
 import asyncio
 import discord
-import os
 import speedtest
 import requests
 import pymongo
@@ -52,7 +51,7 @@ async def speed(ctx):
 async def on_ready():
     print("Bot is ready!")
     if not debug:
-        check_for_new_episodes.start()
+        await check_for_new_episodes.start()
 
 
 @bot.command()
@@ -68,7 +67,23 @@ async def check_for_new_episodes():
     for anime in ANIMELIST.find():
         name = anime["anime"]
         try:
-            latest_ep = get_latest_episode(name)
+            async with aiohttp.ClientSession() as session:
+                async with session.get("https://gogoanime.io/search.html?keyword=" + name) as resp:
+                    html = await resp.text()
+            ul = BeautifulSoup(html, 'html.parser').find(
+                'ul', id='episode_page').find_all("li")
+            temp = []
+            latest_ep = 0
+
+            for item in ul:
+                temp.append(item.find("a").text)
+            if temp == ['0']:
+                break
+            elif temp.__len__() > 1:
+                latest_ep = int(temp[-1].split("-")[1])
+            else:
+                latest_ep = int(temp[0].split("-")[1])
+
             current_ep = anime["latest"]
             if latest_ep > current_ep:
                 data.append(name)
@@ -129,6 +144,7 @@ async def add(ctx, *animename):
         counter += 1
     if animestring == "":
         await firstmsg.edit(content="No anime found with title: " + anime_name)
+        return
     else:
         await firstmsg.edit(content="***Found the following anime:***\n" + animestring)
         secondmsg = await ctx.send("\nPlease enter the number of the anime you would like to add")
@@ -256,27 +272,6 @@ def check_user(user):
 
 def get_user_name(id):
     return ROOT.find_one({"id": id})["name"]
-
-
-def get_latest_episode(anime):
-    URL = "https://gogoanime.gg/category/" + anime
-    HEADER = ({'User-Agent':
-               'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 \
-            (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36',
-               'Accept-Language': 'en-US, en;q=0.5'})
-    sleep(5)
-    html = requests.get(URL, headers=HEADER).text
-    ul = BeautifulSoup(html, 'html.parser').find(
-        'ul', id='episode_page').find_all("li")
-    temp = []
-    for item in ul:
-        temp.append(item.find("a").text)
-    if temp == ['0']:
-        return 0
-    elif temp.__len__() > 1:
-        return int(temp[-1].split("-")[1])
-    else:
-        return int(temp[0].split("-")[1])
 
 
 def humansize(nbytes):
