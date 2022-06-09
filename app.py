@@ -68,7 +68,7 @@ async def check_for_new_episodes():
         name = anime["anime"]
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get("https://gogoanime.io/search.html?keyword=" + name) as resp:
+                async with session.get("https://gogoanime.sk/category/" + name) as resp:
                     html = await resp.text()
             ul = BeautifulSoup(html, 'html.parser').find(
                 'ul', id='episode_page').find_all("li")
@@ -169,7 +169,7 @@ async def add(ctx, *animename):
                     await secondmsg.edit(content="***Anime is not currently airing!***")
                     return
                 except:
-                    URL = "https://gogoanime.gg/category/" + anime
+                    URL = "https://gogoanime.sk/category/" + anime
                     HEADER = ({'User-Agent':
                                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 \
                             (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36',
