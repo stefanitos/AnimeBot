@@ -1,4 +1,5 @@
 from discord.ext import commands, tasks
+from discord.ext.commands import CommandNotFound
 from time import sleep
 from bs4 import BeautifulSoup
 from dhooks import Webhook
@@ -26,6 +27,13 @@ ROOT = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS +
 ANIMELIST = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS +
                                 "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("animelist")
 debug = False
+
+
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, CommandNotFound):
+        return
+    raise error
 
 
 @bot.command()
