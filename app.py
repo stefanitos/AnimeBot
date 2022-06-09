@@ -44,7 +44,7 @@ async def speed(ctx):
     st.download()
     st.upload()
     st.results.share()
-    await msg.edit(content="Download: " + humansize(st.results.download) + "\nUpload: " + humansize(st.results.upload) + "\nPing: " + str(st.results.ping) + "ms")
+    await msg.edit(content="Download: " + humansize(st.results.download) + "/s\nUpload: " + humansize(st.results.upload) + "/s\nPing: " + str(st.results.ping) + "ms")
 
 
 @bot.event
@@ -159,6 +159,7 @@ async def add(ctx, *animename):
         else:
             num = int(msg.content) - 1
             anime = animelist[num]
+
             if anime in ROOT.find_one({"id": ctx.author.id})["anime_list"]:
                 await secondmsg.edit(content="***Anime already in list***")
                 return
