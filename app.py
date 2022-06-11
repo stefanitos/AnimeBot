@@ -13,7 +13,7 @@ import aiohttp
 
 
 intents = discord.Intents.default()
-intents.members = False
+intents.members = True
 
 envs = dotenv_values(".env")
 
@@ -43,7 +43,6 @@ async def speed(ctx):
     st.get_best_server()
     st.download()
     st.upload()
-    st.results.share()
     await msg.edit(content="Download: " + humansize(st.results.download) + "/s\nUpload: " + humansize(st.results.upload) + "/s\nPing: " + str(st.results.ping) + "ms")
 
 
