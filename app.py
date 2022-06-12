@@ -29,7 +29,7 @@ debug = False
 
 
 @bot.event
-async def on_command_error(ctx, error):
+async def on_command_error(error):
     if isinstance(error, CommandNotFound):
         return
     raise error
@@ -95,15 +95,16 @@ async def check_for_new_episodes():
             ids = ANIMELIST.find_one({"anime": anime})["users"]
             latest = ANIMELIST.find_one({"anime": anime})["latest"]
             for id in ids:
-                for channel in guild.text_channels:
-                    if channel.name == str(id):
-                        print("Sending message to " +
-                              get_user_name(id) + " about " + anime)
-                        await channel.send("||<@" + str(id) + ">||\nNew episode of " + anime + "!\n" + "New episode: " + str(latest))
+                channel = discord.utils.get(guild.text_channels, name=str(id))
+                if channel != None:
+                    print("Sending message to " +
+                          get_user_name(id) + " about " + anime)
+                    await channel.send("||<@" + str(id) + ">||\nNew episode of " + anime + "!\n" + "New episode: " + str(latest))
 
 
 @bot.event
 async def on_member_join(member):
+    check_user(member.author)
     server = bot.get_guild(979703279539863562)
     if member.guild.id == 979703279539863562:
         print("User " + member.name + " joined the server!")
@@ -131,6 +132,7 @@ async def add(ctx, *animename):
     async with aiohttp.ClientSession() as session:
         async with session.get(url + anime_name) as response:
             data = await response.text()
+            session.close()
     soup = BeautifulSoup(data, 'html.parser')
     results = soup.find_all("p", {"class": "name"})
     animelist = []
