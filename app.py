@@ -7,7 +7,6 @@ from dotenv import dotenv_values
 import asyncio
 import discord
 import speedtest
-import requests
 import pymongo
 import aiohttp
 
@@ -69,13 +68,23 @@ async def check_for_new_episodes():
             async with aiohttp.ClientSession() as session:
                 async with session.get("https://gogoanime.sk/category/" + name) as resp:
                     html = await resp.text()
-            ul = BeautifulSoup(html, 'html.parser').find(
-                'ul', id='episode_page').find_all("li")
-            temp = []
-            latest_ep = 0
+            ul = BeautifulSoup(html, 'html.parser')
 
-            for item in ul:
+            items = ul.find('ul', id='episode_page').find_all("li")
+            temp = []
+ 
+            try:
+                ul.find('a', {'title': 'Completed Anime'})
+                send_to_log("Anime " + name + " is completed!")
+                users = anime["users"]
+                for user in users:
+                    channel = bot.fetch_channel(str(user))
+            except:
+                pass
+
+            for item in items:
                 temp.append(item.find("a").text)
+
             if temp == ['0']:
                 break
             elif temp.__len__() > 1:
@@ -136,39 +145,34 @@ async def add(ctx, *animename):
     soup = BeautifulSoup(data, 'html.parser')
     results = soup.find_all("p", {"class": "name"})
     animelist = []
-    animestring = ""
-    counter = 1
     for elements in results:
         animelist.append(elements.find("a")["href"].split("/category/")[1])
-    for anime in animelist:
-        animestring += str(counter) + ") " + anime + "\n"
-        counter += 1
+
+    animestring = arrToNumString(animelist)
+
     if animestring == "":
         await firstmsg.edit(content="No anime found with title: " + anime_name)
-        return
     else:
         await firstmsg.edit(content="***Found the following anime:***\n" + animestring)
         secondmsg = await ctx.send("\nPlease enter the number of the anime you would like to add")
 
         def check(m):
             return m.author == ctx.author and m.channel == ctx.channel and m.content.isdigit()
+
         try:
             msg = await bot.wait_for('message', check=check, timeout=30.0)
         except asyncio.TimeoutError:
             await secondmsg.edit(content="Timed out")
             return
         else:
-            num = int(msg.content) - 1
-            anime = animelist[num]
+            anime = animelist[int(msg.content) - 1]
 
             if anime in ROOT.find_one({"id": ctx.author.id})["anime_list"]:
                 await secondmsg.edit(content="***Anime already in list***")
-                return
             else:
                 try:
                     soup.find('a', {'title': 'Completed Anime'})
                     await secondmsg.edit(content="***Anime is not currently airing!***")
-                    return
                 except:
                     URL = "https://gogoanime.sk/category/" + anime
                     HEADER = ({'User-Agent':
@@ -232,11 +236,7 @@ async def remove(ctx):
         await ctx.send("***" + ctx.author.name + "'s Anime List Is Empty!***\n*'add <anime name> to add an anime*")
     else:
         anime_list = ROOT.find_one({"id": ctx.author.id})["anime_list"]
-        animestring = ""
-        counter = 1
-        for anime in anime_list:
-            animestring += str(counter) + ") " + anime + "\n"
-            counter += 1
+        animestring = arrToNumString(anime_list)
         await ctx.send("***" + ctx.author.name + "'s Anime List:***\n" + animestring)
         firstmsg = await ctx.send("Please enter the number of the anime you would like to remove")
 
@@ -285,6 +285,15 @@ def humansize(nbytes):
     f = ('%.2f' % nbytes).rstrip('0').rstrip('.')
     return '%s %s' % (f, suffixes[i])
 
+
+def arrToNumString(array):
+    numlist = ""
+    i = 1
+    for item in array:
+        numlist += str(i) + ")" + str(item)
+        i += 1
+    return numlist
+        
 
 def send_to_log(message):
     Webhook(LOG_WEBHOOK).send(message)
