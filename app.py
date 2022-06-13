@@ -24,7 +24,7 @@ ROOT = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS +
                            "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("users")
 ANIMELIST = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS +
                                 "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("animelist")
-debug = False
+debug = True
 
 
 @bot.event
@@ -76,9 +76,11 @@ async def check_for_new_episodes():
             try:
                 ul.find('a', {'title': 'Completed Anime'})
                 send_to_log("Anime " + name + " is completed!")
-                users = anime["users"]
-                for user in users:
+                for user in anime["users"]:
                     channel = bot.fetch_channel(str(user))
+                    await channel.send("Anime " + name + " is completed!\nRemoving from your list...")
+                    ANIMELIST.update_one({"anime": name, "users": user}, {"$pull": {"users": user}})
+                ANIMELIST.delete_one({"anime": name})
             except:
                 pass
 
