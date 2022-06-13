@@ -1,3 +1,4 @@
+from turtle import st
 from discord.ext import commands, tasks
 from discord.ext.commands import CommandNotFound
 from time import sleep
@@ -74,13 +75,14 @@ async def check_for_new_episodes():
             temp = []
  
             try:
-                ul.find('a', {'title': 'Completed Anime'})
-                send_to_log("Anime " + name + " is completed!")
-                for user in anime["users"]:
-                    channel = bot.fetch_channel(str(user))
-                    await channel.send("Anime " + name + " is completed!\nRemoving from your list...")
-                    ANIMELIST.update_one({"anime": name, "users": user}, {"$pull": {"users": user}})
-                ANIMELIST.delete_one({"anime": name})
+                status = ul.find('a', {'title': 'Completed Anime'})
+                if status.text == "Completed":
+                    send_to_log("Anime " + name + " is completed!")
+                    for user in anime["users"]:
+                        channel = bot.fetch_channel(str(user))
+                        await channel.send("Anime " + name + " is completed!\nRemoving from your list...")
+                        ANIMELIST.update_one({"anime": name, "users": user}, {"$pull": {"users": user}})
+                    ANIMELIST.delete_one({"anime": name})
             except:
                 pass
 
