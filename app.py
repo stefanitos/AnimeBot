@@ -308,7 +308,7 @@ def arrToNumString(array):
     numlist = ""
     i = 1
     for item in array:
-        numlist += str(i) + ")" + str(item)
+        numlist += str(i) + ")" + item + "\n"
         i += 1
     return numlist
 
