@@ -211,6 +211,7 @@ async def add(ctx, *animename):
                 await secondmsg.edit(content="***Anime is completed***")
             else:
                 await secondmsg.edit(content="***Anime : " + anime + " added to list! (not yet airing)***")
+# TODO THIS BRUH
 
             
 
