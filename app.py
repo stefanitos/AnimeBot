@@ -1,3 +1,4 @@
+from os import stat
 from discord.ext import commands, tasks
 from discord.ext.commands import CommandNotFound
 from time import sleep
@@ -174,10 +175,9 @@ async def add(ctx, *animename):
         if anime in ROOT.find_one({"id": ctx.author.id})["anime_list"]:
             await secondmsg.edit(content="***Anime already in list***")
         else:
-            try:
-                soup.find('a', {'title': 'Completed Anime'})
-                await secondmsg.edit(content="***Anime is not currently airing!***")
-            except:
+            status = soup.find('a', {'title': 'Ongoing Anime'})
+
+            if status != None:
                 URL = "https://gogoanime.sk/category/" + anime
                 HEADER = ({'User-Agent':
                            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 \
@@ -207,6 +207,12 @@ async def add(ctx, *animename):
                     ANIMELIST.update_one({"anime": anime}, {
                                          "$push": {"users": ctx.author.id}})
                 await secondmsg.edit(content="***Anime : " + anime + " added to list!***")
+            elif soup.find('a', {'title': 'Completed Anime'}) != None:
+                await secondmsg.edit(content="***Anime is completed***")
+            else:
+                await secondmsg.edit(content="***Anime : " + anime + " added to list! (not yet airing)***")
+
+            
 
 
 @bot.command()
