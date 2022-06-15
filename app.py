@@ -24,11 +24,11 @@ ROOT = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS +
                            "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("users")
 ANIMELIST = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS +
                                 "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("animelist")
-debug = False
+debug = True
 
 
 @bot.event
-async def on_command_error(error):
+async def on_command_error(ctx, error):
     if isinstance(error, CommandNotFound):
         return
     raise error
@@ -145,7 +145,7 @@ async def add(ctx, *animename):
     async with aiohttp.ClientSession() as session:
         async with session.get(url + anime_name) as response:
             data = await response.text()
-            session.close()
+            await session.close()
     soup = BeautifulSoup(data, 'html.parser')
     results = soup.find_all("p", {"class": "name"})
     animelist = []
@@ -264,6 +264,20 @@ async def remove(ctx):
                 ANIMELIST.update_one({"anime": anime}, {
                                      "$pull": {"users": ctx.author.id}})
             await firstmsg.edit(content="***Anime : " + anime + " removed from list!***")
+
+
+@bot.command()
+async def time(ctx,*args):
+    """Time - Returns the time until the next anime airing"""
+    check_user(ctx.author)
+    name = "+".join(args)
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get() as response: # USE LIVECHARTS
+            data = await response.text()
+    soup = BeautifulSoup(data, 'html.parser')
+
+
 
 
 def check_user(user):
