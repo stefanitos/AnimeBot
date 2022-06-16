@@ -167,6 +167,7 @@ async def add(ctx, *animename):
     except asyncio.TimeoutError:
         await secondmsg.edit(content="Timed out")
         return
+
     anime = animelist[int(msg.content) - 1]
     if anime in ROOT.find_one({"id": ctx.author.id})["anime_list"]:
         await secondmsg.edit(content="***Anime already in list***")
@@ -190,13 +191,15 @@ async def add(ctx, *animename):
         for item in ul:
             temp.append(item.find("a").text)
         if temp == ['0']:
-            return
+            latest = 0
         elif temp.__len__() > 1:
             latest = int(temp[-1].split("-")[1])
         else:
             latest = int(temp[0].split("-")[1])
         ROOT.update_one({"id": ctx.author.id}, {
                         "$push": {"anime_list": anime}})
+
+        print(latest)
         if ANIMELIST.find_one({"anime": anime}) == None:
             ANIMELIST.insert_one(
                 {"anime": anime, "users": [ctx.author.id], "latest": latest})
