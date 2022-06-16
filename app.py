@@ -1,4 +1,5 @@
 from os import stat
+from turtle import st
 from discord.ext import commands, tasks
 from discord.ext.commands import CommandNotFound
 from time import sleep
@@ -173,42 +174,41 @@ async def add(ctx, *animename):
         await secondmsg.edit(content="***Anime already in list***")
     else:
         status = soup.find('a', {'title': 'Completed Anime'})
-        if status != None:
-            await secondmsg.edit(content="***Anime is completed!***")
-            return
-        URL = "https://gogoanime.sk/category/" + anime
-        HEADER = ({'User-Agent':
-                   'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 \
-                (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36',
-                   'Accept-Language': 'en-US, en;q=0.5'})
-        async with aiohttp.ClientSession() as session:
-            async with session.get(URL, headers=HEADER) as response:
-                data = await response.text()
-        ul = BeautifulSoup(data, 'html.parser').find(
-            'ul', id='episode_page').find_all("li")
-        temp = []
-        latest = 0
-        for item in ul:
-            temp.append(item.find("a").text)
-        if temp == ['0']:
+        
+        if status == None:
+            URL = "https://gogoanime.sk/category/" + anime
+            HEADER = ({'User-Agent':
+                       'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 \
+                    (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36',
+                       'Accept-Language': 'en-US, en;q=0.5'})
+            async with aiohttp.ClientSession() as session:
+                async with session.get(URL, headers=HEADER) as response:
+                    data = await response.text()
+            ul = BeautifulSoup(data, 'html.parser').find(
+                'ul', id='episode_page').find_all("li")
+            temp = []
             latest = 0
-        elif temp.__len__() > 1:
-            latest = int(temp[-1].split("-")[1])
-        else:
-            latest = int(temp[0].split("-")[1])
-        ROOT.update_one({"id": ctx.author.id}, {
-                        "$push": {"anime_list": anime}})
+            for item in ul:
+                temp.append(item.find("a").text)
+            if temp == ['0']:
+                latest = 0
+            elif temp.__len__() > 1:
+                latest = int(temp[-1].split("-")[1])
+            else:
+                latest = int(temp[0].split("-")[1])
 
-        print(latest)
-        if ANIMELIST.find_one({"anime": anime}) == None:
-            ANIMELIST.insert_one(
-                {"anime": anime, "users": [ctx.author.id], "latest": latest})
-        else:
-            ANIMELIST.update_one({"anime": anime}, {
-                                 "$push": {"users": ctx.author.id}})
-        await secondmsg.edit(content="***Anime : " + anime + " added to list!***")
-        if soup.find('a', {'title': 'Upcoming Anime'}) != None:
-            await ctx.send("***(Anime has not started airing)***")
+            ROOT.update_one({"id": ctx.author.id}, {
+                            "$push": {"anime_list": anime}})
+
+            if ANIMELIST.find_one({"anime": anime}) == None:
+                ANIMELIST.insert_one(
+                    {"anime": anime, "users": [ctx.author.id], "latest": latest})
+            else:
+                ANIMELIST.update_one({"anime": anime}, {
+                                     "$push": {"users": ctx.author.id}})
+            await secondmsg.edit(content="***Anime : " + anime + " added to list!***")
+            if soup.find('a', {'title': 'Upcoming Anime'}) != None:
+                await ctx.send("***(Anime has not started airing)***")
 
 @bot.command()
 async def list(ctx, *args):
