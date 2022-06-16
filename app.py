@@ -264,20 +264,6 @@ async def remove(ctx):
             await firstmsg.edit(content="***Anime : " + anime + " removed from list!***")
 
 
-@bot.command()
-async def time(ctx,*args):
-    """Time - Returns the time until the next anime airing"""
-    check_user(ctx.author)
-    name = "+".join(args)
-
-    async with aiohttp.ClientSession() as session:
-        async with session.get() as response: # USE LIVECHARTS
-            data = await response.text()
-    soup = BeautifulSoup(data, 'html.parser')
-
-
-
-
 def check_user(user):
     if ROOT.find_one({"id": user.id}) == None:
         print("Creating user: " + user.name)
