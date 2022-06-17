@@ -146,7 +146,7 @@ async def add(ctx, *animename):
         return
     anime_name = " ".join(animename)
     firstmsg = await ctx.send("Searching for anime...")
-    url = f'https://gogoanime.sk/search.html?keyword={anime_name}'
+    url = 'https://gogoanime.sk/search.html?keyword=' + anime_name
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             data = await response.text()
@@ -158,7 +158,7 @@ async def add(ctx, *animename):
         href = elements.find("a")["href"]
         sleep(0.6)
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://gogoanime.sk{href}") as response:
+            async with session.get(f"https://gogoanime.sk" + href) as response:
                 data = await response.text()
                 await session.close()
         soup = BeautifulSoup(data, 'html.parser')
@@ -219,7 +219,7 @@ async def add(ctx, *animename):
                                      "$push": {"users": ctx.author.id}})
             await secondmsg.edit(content="***Anime : " + anime + " added to list!***")
             if soup.find('a', {'title': 'Upcoming Anime'}) != None:
-                await secondmsg.edit(content=f"{secondmsg.content}\n***(Anime has not started airing)***")
+                await secondmsg.edit(content=secondmsg.content + "\n***(Anime has not started airing)***")
         else:
             await secondmsg.edit(content="***Anime has finished airing***")
 
@@ -260,7 +260,7 @@ async def remove(ctx):
         firstmsg = await ctx.send("Please enter the number of the anime you would like to remove")
 
         def check(m):
-            return m.author == ctx.author and m.channel == ctx.channel and m.content.isdigit()
+            return m.author == ctx.author and m.channel == ctx.channel and m.content.isdigit() and int(m.content) <= anime_list.__len__() and int(m.content) > 0
 
         try:
             msg = await bot.wait_for('message', check=check, timeout=30.0)
