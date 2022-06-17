@@ -68,6 +68,7 @@ async def check_for_new_episodes():
     for anime in ANIMELIST.find():
         name = anime["anime"]
         try:
+            sleep(0.6)
             async with aiohttp.ClientSession() as session:
                 async with session.get("https://gogoanime.sk/category/" + name) as resp:
                     html = await resp.text()
@@ -87,6 +88,7 @@ async def check_for_new_episodes():
                     ROOT.update_one(
                         {"id": user}, {"$pull": {"anime_list": name}})
                 ANIMELIST.delete_one({"anime": name})
+                return
 
             for item in items:
                 temp.append(item.find("a").text)
@@ -103,6 +105,7 @@ async def check_for_new_episodes():
                 data.append(name)
                 ANIMELIST.update_one(
                     {"anime": name}, {"$set": {"latest": latest_ep}})
+
         except:
             raise Exception("Error getting latest episode")
     if data != []:
@@ -162,6 +165,8 @@ async def add(ctx, *animename):
         status = soup.find('a', {'title': 'Completed Anime'})
         if status == None:
             animelist.append(href.split("/category/")[1])
+    if animelist.__len__() != 0:
+        await firstmsg.edit(content=f"Coudnt find {anime_name}")
     await firstmsg.edit(content="***Found the following anime:***\n" + arrToNumString(animelist))
     secondmsg = await ctx.send("\nPlease enter the number of the anime you would like to add")
 
