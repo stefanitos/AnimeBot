@@ -135,7 +135,7 @@ async def on_member_join(member):
 
 
 @bot.command()
-async def add(ctx, *animename):
+async def test(ctx, *animename):
     """'add <anime name> - Adds an anime to your list"""
     check_user(ctx.author)
     if animename.__len__() == 0:
@@ -161,6 +161,7 @@ async def add(ctx, *animename):
         return
     await firstmsg.edit(content="***Found the following anime:***\n" + animestring)
     secondmsg = await ctx.send("\nPlease enter the number of the anime you would like to add")
+
     def check(m):
         return m.author == ctx.author and m.channel == ctx.channel and m.content.isdigit()
     try:
@@ -173,19 +174,18 @@ async def add(ctx, *animename):
     if anime in ROOT.find_one({"id": ctx.author.id})["anime_list"]:
         await secondmsg.edit(content="***Anime already in list***")
     else:
+        URL = f"https://gogoanime.sk/category/{anime}"
+        HEADER = ({'User-Agent':
+                   'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 \
+                (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36',
+                   'Accept-Language': 'en-US, en;q=0.5'})
+        async with aiohttp.ClientSession() as session:
+            async with session.get(URL, headers=HEADER) as response:
+                data = await response.text()
+        soup = BeautifulSoup(data, 'html.parser')
         status = soup.find('a', {'title': 'Completed Anime'})
-        
+        ul = soup.find('ul', id='episode_page').find_all("li")
         if status == None:
-            URL = "https://gogoanime.sk/category/" + anime
-            HEADER = ({'User-Agent':
-                       'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 \
-                    (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36',
-                       'Accept-Language': 'en-US, en;q=0.5'})
-            async with aiohttp.ClientSession() as session:
-                async with session.get(URL, headers=HEADER) as response:
-                    data = await response.text()
-            ul = BeautifulSoup(data, 'html.parser').find(
-                'ul', id='episode_page').find_all("li")
             temp = []
             latest = 0
             for item in ul:
@@ -208,7 +208,92 @@ async def add(ctx, *animename):
                                      "$push": {"users": ctx.author.id}})
             await secondmsg.edit(content="***Anime : " + anime + " added to list!***")
             if soup.find('a', {'title': 'Upcoming Anime'}) != None:
-                await ctx.send("***(Anime has not started airing)***")
+                await secondmsg.edit(content=f"{secondmsg.content}\n***(Anime has not started airing)***")
+        else:
+            await secondmsg.edit(content="***Anime has finished airing***")
+
+
+@bot.command()
+async def add(ctx, *animename):
+    """'add <anime name> - Adds an anime to your list"""
+    check_user(ctx.author)
+    if animename.__len__() == 0:
+        await ctx.send("Please specify an anime name")
+        return
+    anime_name = " ".join(animename)
+    firstmsg = await ctx.send("Searching for anime...")
+    url = f'https://gogoanime.sk/search.html?keyword={anime_name}'
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            data = await response.text()
+            await session.close()
+    soup = BeautifulSoup(data, 'html.parser')
+    results = soup.find_all("p", {"class": "name"})
+    animelist = []
+    for elements in results:
+        href = elements.find("a")["href"]
+        sleep(0.6)
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"https://gogoanime.sk{href}") as response:
+                data = await response.text()
+                await session.close()
+        soup = BeautifulSoup(data, 'html.parser')
+        status = soup.find('a', {'title': 'Completed Anime'})
+        if status == None:
+            animelist.append(href.split("/category/")[1])
+    await firstmsg.edit(content="***Found the following anime:***\n" + arrToNumString(animelist))
+    secondmsg = await ctx.send("\nPlease enter the number of the anime you would like to add")
+
+    def check(m):
+        return m.author == ctx.author and m.channel == ctx.channel and m.content.isdigit() and int(m.content) <= animelist.__len__()
+    try:
+        msg = await bot.wait_for('message', check=check, timeout=60.0)
+    except asyncio.TimeoutError:
+        await secondmsg.edit(content="Timed out")
+        return
+
+    anime = animelist[int(msg.content) - 1]
+    if anime in ROOT.find_one({"id": ctx.author.id})["anime_list"]:
+        await secondmsg.edit(content="***Anime already in list***")
+    else:
+        URL = f"https://gogoanime.sk/category/{anime}"
+        HEADER = ({'User-Agent':
+                     'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 \
+                 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36',
+                     'Accept-Language': 'en-US, en;q=0.5'})
+        async with aiohttp.ClientSession() as session:
+            async with session.get(URL, headers=HEADER) as response:
+                 data = await response.text()
+        soup = BeautifulSoup(data, 'html.parser')
+        status = soup.find('a', {'title': 'Completed Anime'})
+        ul = soup.find('ul', id='episode_page').find_all("li")
+        if status == None:
+            temp = []
+            latest = 0
+            for item in ul:
+                temp.append(item.find("a").text)
+            if temp == ['0']:
+                latest = 0
+            elif temp.__len__() > 1:
+                latest = int(temp[-1].split("-")[1])
+            else:
+                latest = int(temp[0].split("-")[1])
+
+            ROOT.update_one({"id": ctx.author.id}, {
+                            "$push": {"anime_list": anime}})
+
+            if ANIMELIST.find_one({"anime": anime}) == None:
+                ANIMELIST.insert_one(
+                    {"anime": anime, "users": [ctx.author.id], "latest": latest})
+            else:
+                ANIMELIST.update_one({"anime": anime}, {
+                                     "$push": {"users": ctx.author.id}})
+            await secondmsg.edit(content="***Anime : " + anime + " added to list!***")
+            if soup.find('a', {'title': 'Upcoming Anime'}) != None:
+                await secondmsg.edit(content=f"{secondmsg.content}\n***(Anime has not started airing)***")
+        else:
+            await secondmsg.edit(content="***Anime has finished airing***")
+
 
 @bot.command()
 async def list(ctx, *args):
@@ -295,7 +380,7 @@ def arrToNumString(array):
     numlist = ""
     i = 1
     for item in array:
-        numlist += str(i) + ")" + item + "\n"
+        numlist += str(i) + ") " + item + "\n"
         i += 1
     return numlist
 
