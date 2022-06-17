@@ -165,8 +165,11 @@ async def add(ctx, *animename):
         status = soup.find('a', {'title': 'Completed Anime'})
         if status == None:
             animelist.append(href.split("/category/")[1])
-    if animelist.__len__() != 0:
+
+    if animelist.__len__() == 0:
         await firstmsg.edit(content=f"Coudnt find {anime_name}")
+        return
+
     await firstmsg.edit(content="***Found the following anime:***\n" + arrToNumString(animelist))
     secondmsg = await ctx.send("\nPlease enter the number of the anime you would like to add")
 
