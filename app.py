@@ -26,6 +26,7 @@ ROOT = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS +
                            "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("users")
 ANIMELIST = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS +
                                 "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("animelist")
+
 debug = True
 
 
@@ -158,7 +159,7 @@ async def add(ctx, *animename):
         href = elements.find("a")["href"]
         sleep(0.6)
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://gogoanime.sk" + href) as response:
+            async with session.get("https://gogoanime.sk" + href) as response:
                 data = await response.text()
                 await session.close()
         soup = BeautifulSoup(data, 'html.parser')
@@ -167,7 +168,7 @@ async def add(ctx, *animename):
             animelist.append(href.split("/category/")[1])
 
     if animelist.__len__() == 0:
-        await firstmsg.edit(content=f"Coudnt find {anime_name}")
+        await firstmsg.edit(content="Coudnt find any anime with that name!")
         return
 
     await firstmsg.edit(content="***Found the following anime:***\n" + arrToNumString(animelist))
@@ -185,13 +186,9 @@ async def add(ctx, *animename):
     if anime in ROOT.find_one({"id": ctx.author.id})["anime_list"]:
         await secondmsg.edit(content="***Anime already in list***")
     else:
-        URL = f"https://gogoanime.sk/category/{anime}"
-        HEADER = ({'User-Agent':
-                     'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 \
-                 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36',
-                     'Accept-Language': 'en-US, en;q=0.5'})
+        URL = "https://gogoanime.sk/category/" + anime
         async with aiohttp.ClientSession() as session:
-            async with session.get(URL, headers=HEADER) as response:
+            async with session.get(URL) as response:
                  data = await response.text()
         soup = BeautifulSoup(data, 'html.parser')
         status = soup.find('a', {'title': 'Completed Anime'})
@@ -307,10 +304,8 @@ def humansize(nbytes):
 
 def arrToNumString(array):
     numlist = ""
-    i = 1
-    for item in array:
-        numlist += str(i) + ") " + item + "\n"
-        i += 1
+    for i in range(array.__len__()):
+        numlist += str(i+1) + ") " + array[i] + "\n"
     return numlist
 
 
