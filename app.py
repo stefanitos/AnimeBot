@@ -112,9 +112,9 @@ async def check_for_new_episodes():
 
 @bot.event
 async def on_member_join(member):
-    check_user(member.author)
     server = bot.get_guild(979703279539863562)
     if member.guild.id == 979703279539863562:
+        check_user(member.author)
         print("User " + member.name + " joined the server!")
         role = discord.utils.get(server.roles, name=str(member.id))
         if role == None:
