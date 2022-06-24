@@ -1,5 +1,6 @@
 from os import stat
 from turtle import st
+from xmlrpc.client import MININT
 from discord.ext import commands, tasks
 from discord.ext.commands import CommandNotFound
 from time import sleep
@@ -26,8 +27,8 @@ ROOT = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS +
                            "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("users")
 ANIMELIST = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS +
                                 "@cluster0.6m582.mongodb.net/?retryWrites=true&w=majority").get_database("root").get_collection("animelist")
-
-debug = True
+MINUTES = 0
+debug = False
 
 
 @bot.event
@@ -63,8 +64,12 @@ async def ping(ctx):
 
 @tasks.loop(seconds=600)
 async def check_for_new_episodes():
+    global MINUTES
+    MINUTES += 10
+    if MINUTES == 120:
+        send_to_log("Still checking for new episodes...")
+        MINUTES = 0
     guild = bot.get_guild(979703279539863562)
-    send_to_log("Checking for new episodes...")
     data = []
     for anime in ANIMELIST.find():
         name = anime["anime"]
