@@ -66,6 +66,7 @@ async def ping(ctx):
 async def check_for_new_episodes():
     global MINUTES
     MINUTES += 10
+    print(MINUTES)
     if MINUTES == 120:
         send_to_log("Still checking for new episodes...")
         MINUTES = 0
