@@ -30,7 +30,6 @@ ANIMELIST = pymongo.MongoClient("mongodb+srv://admin:" + MONGO_PASS +
 MINUTES = 0
 debug = False
 
-
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, CommandNotFound):
@@ -64,56 +63,59 @@ async def ping(ctx):
 
 @tasks.loop(seconds=600)
 async def check_for_new_episodes():
-    global MINUTES
-    MINUTES += 10
-    print(MINUTES)
-    if MINUTES == 120:
-        send_to_log("Still checking for new episodes...")
-        MINUTES = 0
-    guild = bot.get_guild(979703279539863562)
-    data = []
-    for anime in ANIMELIST.find():
-        name = anime["anime"]
-        sleep(0.6)
-        async with aiohttp.ClientSession() as session:
-            async with session.get("https://gogoanime.sk/category/" + name) as resp:
-                html = await resp.text()
-        ul = BeautifulSoup(html, 'html.parser')
-        items = ul.find('ul', id='episode_page').find_all("li")
-        temp = []
-        status = ul.find('a', {'title': 'Completed Anime'})
-        if status != None:
-            send_to_log("Anime " + name + " is completed!")
-            for user in anime["users"]:
-                channel = discord.utils.get(guild.text_channels, name=str(user))
-                await channel.send("\nFinal episode of " + name + " has aired.\nRemoving from your list...")
-                ROOT.update_one(
-                    {"id": user}, {"$pull": {"anime_list": name}})
-            ANIMELIST.delete_one({"anime": name})
-            return
-        for item in items:
-            temp.append(item.find("a").text)
-        if temp == ['0']:
-            break
-        elif temp.__len__() > 1:
-            latest_ep = int(temp[-1].split("-")[1])
-        else:
-            latest_ep = int(temp[0].split("-")[1])
-        current_ep = anime["latest"]
-        if latest_ep > current_ep:
-            data.append(name)
-            ANIMELIST.update_one(
-                {"anime": name}, {"$set": {"latest": latest_ep}})
-    if data != []:
-        for anime in data:
-            ids = ANIMELIST.find_one({"anime": anime})["users"]
-            latest = ANIMELIST.find_one({"anime": anime})["latest"]
-            for id in ids:
-                channel = discord.utils.get(guild.text_channels, name=str(id))
-                if channel != None:
-                    print("Sending message to " +
-                          get_user_name(id) + " about " + anime)
-                    await channel.send("||<@" + str(id) + ">||\nNew episode of " + anime + "!\n" + "New episode: " + str(latest))
+    try:
+        global MINUTES
+        MINUTES += 10
+        print(MINUTES)
+        if MINUTES == 120:
+            send_to_log("Still checking for new episodes...")
+            MINUTES = 0
+        guild = bot.get_guild(979703279539863562)
+        data = []
+        for anime in ANIMELIST.find():
+            name = anime["anime"]
+            sleep(0.6)
+            async with aiohttp.ClientSession() as session:
+                async with session.get("https://gogoanime.sk/category/" + name) as resp:
+                    html = await resp.text()
+            ul = BeautifulSoup(html, 'html.parser')
+            items = ul.find('ul', id='episode_page').find_all("li")
+            temp = []
+            status = ul.find('a', {'title': 'Completed Anime'})
+            if status != None:
+                send_to_log("Anime " + name + " is completed!")
+                for user in anime["users"]:
+                    channel = discord.utils.get(guild.text_channels, name=str(user))
+                    await channel.send("\nFinal episode of " + name + " has aired.\nRemoving from your list...")
+                    ROOT.update_one(
+                        {"id": user}, {"$pull": {"anime_list": name}})
+                ANIMELIST.delete_one({"anime": name})
+                return
+            for item in items:
+                temp.append(item.find("a").text)
+            if temp == ['0']:
+                break
+            elif temp.__len__() > 1:
+                latest_ep = int(temp[-1].split("-")[1])
+            else:
+                latest_ep = int(temp[0].split("-")[1])
+            current_ep = anime["latest"]
+            if latest_ep > current_ep:
+                data.append(name)
+                ANIMELIST.update_one(
+                    {"anime": name}, {"$set": {"latest": latest_ep}})
+        if data != []:
+            for anime in data:
+                ids = ANIMELIST.find_one({"anime": anime})["users"]
+                latest = ANIMELIST.find_one({"anime": anime})["latest"]
+                for id in ids:
+                    channel = discord.utils.get(guild.text_channels, name=str(id))
+                    if channel != None:
+                        print("Sending message to " +
+                              get_user_name(id) + " about " + anime)
+                        await channel.send("||<@" + str(id) + ">||\nNew episode of " + anime + "!\n" + "New episode: " + str(latest))
+    except Exception as e:
+        print(e)
 
 
 @bot.event
