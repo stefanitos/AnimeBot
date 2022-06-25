@@ -1,6 +1,4 @@
 from os import stat
-from turtle import st
-from xmlrpc.client import MININT
 from discord.ext import commands, tasks
 from discord.ext.commands import CommandNotFound
 from time import sleep
