@@ -64,7 +64,6 @@ async def check_for_new_episodes():
     try:
         global MINUTES
         MINUTES += 10
-        print(MINUTES)
         if MINUTES == 120:
             send_to_log("Still checking for new episodes...")
             MINUTES = 0
@@ -84,7 +83,7 @@ async def check_for_new_episodes():
                 send_to_log("Anime " + name + " is completed!")
                 for user in anime["users"]:
                     channel = discord.utils.get(guild.text_channels, name=str(user))
-                    await channel.send("\nFinal episode of " + name + " has aired.\nRemoving from your list...")
+                    await channel.send("||<@" + user + ">||\nFinal episode of " + name + " has aired.\nRemoving from your list...")
                     ROOT.update_one(
                         {"id": user}, {"$pull": {"anime_list": name}})
                 ANIMELIST.delete_one({"anime": name})
