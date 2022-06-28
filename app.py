@@ -229,8 +229,7 @@ async def list(ctx, *args):
 
     anime_list = ROOT.find_one({"id": user_id})["anime_list"]
 
-    if anime_list == []:
-        await ctx.send("***No anime in list***")
+    if anime_list == []: return await ctx.send("***No anime in list***")
 
     animestring = ""
     for anime in anime_list:
