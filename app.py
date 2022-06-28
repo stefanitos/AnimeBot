@@ -64,7 +64,7 @@ async def check_for_new_episodes():
     try:
         global MINUTES
         MINUTES += 10
-        if MINUTES == 120:
+        if MINUTES >= 120:
             send_to_log("Still checking for new episodes...")
             MINUTES = 0
         guild = bot.get_guild(979703279539863562)
