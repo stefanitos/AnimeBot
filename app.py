@@ -59,7 +59,7 @@ async def ping(ctx):
     await ctx.send("***" + str(bot.latency) + " seconds***")
 
 
-@tasks.loop(seconds=10)
+@tasks.loop(seconds=600)
 async def check_for_new_episodes():
     try:
         global MINUTES
