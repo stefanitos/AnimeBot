@@ -59,7 +59,7 @@ async def ping(ctx):
     await ctx.send("***" + str(bot.latency) + " seconds***")
 
 
-@tasks.loop(seconds=600)
+@tasks.loop(seconds=10)
 async def check_for_new_episodes():
     try:
         global MINUTES
@@ -83,7 +83,7 @@ async def check_for_new_episodes():
                 send_to_log("Anime " + name + " is completed!")
                 for user in anime["users"]:
                     channel = discord.utils.get(guild.text_channels, name=str(user))
-                    await channel.send("||<@" + user + ">||\nFinal episode of " + name + " has aired.\nRemoving from your list...")
+                    await channel.send("||<@" + str(user) + ">||\nFinal episode of " + name + " has aired.\nRemoving from your list...")
                     ROOT.update_one(
                         {"id": user}, {"$pull": {"anime_list": name}})
                 ANIMELIST.delete_one({"anime": name})
