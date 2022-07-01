@@ -73,7 +73,7 @@ async def check_for_new_episodes():
             name = anime["anime"]
             sleep(0.6)
             async with aiohttp.ClientSession() as session:
-                async with session.get("https://gogoanime.sk/category/" + name) as resp:
+                async with session.get("https://gogoanime.lu/category/" + name) as resp:
                     html = await resp.text()
             ul = BeautifulSoup(html, 'html.parser')
             items = ul.find('ul', id='episode_page').find_all("li")
@@ -142,7 +142,7 @@ async def add(ctx, *animename):
         return
     anime_name = " ".join(animename)
     firstmsg = await ctx.send("Searching for anime...")
-    url = 'https://gogoanime.sk/search.html?keyword=' + anime_name
+    url = 'https://gogoanime.lu/search.html?keyword=' + anime_name
     async with aiohttp.ClientSession() as session:
         async with session.get(url) as response:
             data = await response.text()
@@ -154,7 +154,7 @@ async def add(ctx, *animename):
         href = elements.find("a")["href"]
         sleep(0.6)
         async with aiohttp.ClientSession() as session:
-            async with session.get("https://gogoanime.sk" + href) as response:
+            async with session.get("https://gogoanime.lu" + href) as response:
                 data = await response.text()
                 await session.close()
         soup = BeautifulSoup(data, 'html.parser')
@@ -181,7 +181,7 @@ async def add(ctx, *animename):
     if anime in ROOT.find_one({"id": ctx.author.id})["anime_list"]:
         await secondmsg.edit(content="***Anime already in list***")
     else:
-        URL = "https://gogoanime.sk/category/" + anime
+        URL = "https://gogoanime.lu/category/" + anime
         async with aiohttp.ClientSession() as session:
             async with session.get(URL) as response:
                  data = await response.text()
