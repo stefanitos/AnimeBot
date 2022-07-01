@@ -112,7 +112,7 @@ async def check_for_new_episodes():
                               get_user_name(id) + " about " + anime)
                         await channel.send("||<@" + str(id) + ">||\nNew episode of " + anime + "!\n" + "New episode: " + str(latest))
     except:
-        send_to_log("Error in checking for new episodes!")
+        print("Error in check_for_new_episodes")
         raise
 
 
