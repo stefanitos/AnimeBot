@@ -50,8 +50,9 @@ async def speed(ctx):
 async def on_ready():
     print("Bot is ready!")
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="for any new anime epsiodes!"))
-    if debug and check_for_new_episodes.is_running is False:
+    if not check_for_new_episodes.is_running:
         await check_for_new_episodes.start()
+        
 
 
 @bot.command()
